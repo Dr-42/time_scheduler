@@ -9,9 +9,24 @@ class HomePage extends StatelessWidget {
   // User can add new block types
   // User cannot delete block types
   final List<BlockType> blockTypes = [
-    BlockType(name: "Sleep", color: Colors.blue[900]!, id: 0),
-    BlockType(name: "Work", color: Colors.red[900]!, id: 1),
-    BlockType(name: "Play", color: Colors.green[900]!, id: 2),
+    BlockType(
+      name: "Sleep",
+      color: Color.fromARGB(255, 102, 58, 5)!,
+      id: 0,
+      icon: Icons.bedtime,
+    ),
+    BlockType(
+      name: "Work",
+      color: Colors.purple[800]!,
+      id: 1,
+      icon: Icons.work,
+    ),
+    BlockType(
+      name: "Play",
+      color: Colors.amber[800]!,
+      id: 2,
+      icon: Icons.sports_esports,
+    ),
   ];
 
   // A list of time blocks
@@ -36,10 +51,21 @@ class HomePage extends StatelessWidget {
         type: 2),
     TimeBlock(
       startTime: DateTime.now().subtract(Duration(hours: 6)),
-      endTime: DateTime.now(),
-      title: "Sleep",
+      endTime: DateTime.now().subtract(Duration(hours: 4)),
+      title: "Evening Sleep",
       type: 0,
-    )
+    ),
+    TimeBlock(
+      startTime: DateTime.now().subtract(Duration(hours: 4)),
+      endTime: DateTime.now().subtract(Duration(hours: 1)),
+      title: "Evening Work",
+      type: 1,
+    ),
+    TimeBlock(
+        startTime: DateTime.now().subtract(Duration(hours: 1)),
+        endTime: DateTime.now(),
+        title: "Evening Play",
+        type: 2),
   ];
 
   @override
@@ -47,16 +73,55 @@ class HomePage extends StatelessWidget {
     var curTime = DateTime(2023, 5, 12, 16, 9, 0);
     return Column(
       children: [
-        PieChart(
-          timeBlocks: timeBlocks,
-          blockTypes: blockTypes,
-        ),
-        CenterTimer(startTime: curTime),
-        for (var block in timeBlocks)
-          TimeBlockCard(
-            block: block,
-            blockTypes: blockTypes,
+        Container(
+          child: Text(
+            "Welcome Spandan!",
+            style: Theme.of(context).textTheme.displaySmall,
           ),
+        ),
+        CenterTimer(
+          startTime: curTime,
+          blockType: blockTypes[timeBlocks[timeBlocks.length - 1].type],
+        ),
+        Card(
+          child: Text(
+              style: TextStyle(fontSize: 24),
+              "Currently in ${blockTypes[timeBlocks[timeBlocks.length - 1].type].name}"),
+        ),
+        Divider(),
+        Text(
+          "Today's Distribution",
+          style: TextStyle(fontSize: 16),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            PieChart(
+              timeBlocks: timeBlocks,
+              blockTypes: blockTypes,
+            ),
+            PieChartLegend(
+              blockTypes: blockTypes,
+            ),
+          ],
+        ),
+        Divider(),
+        Text(
+          "Until now",
+          style: TextStyle(fontSize: 16),
+        ),
+        // Collapsible list of time blocks
+        Expanded(
+          child: ListView.builder(
+            itemCount: timeBlocks.length,
+            itemBuilder: (context, index) {
+              return TimeBlockCard(
+                block: timeBlocks[index],
+                blockTypes: blockTypes,
+              );
+            },
+          ),
+        ),
       ],
     );
   }
@@ -93,10 +158,12 @@ class TimeBlockCard extends StatelessWidget {
 
 class CenterTimer extends StatefulWidget {
   final DateTime startTime;
+  final BlockType blockType;
 
   const CenterTimer({
     Key? key,
     required this.startTime,
+    required this.blockType,
   }) : super(key: key);
 
   @override
@@ -129,6 +196,7 @@ class _CenterTimerState extends State<CenterTimer> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Card(
+          color: widget.blockType.color,
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Text(
@@ -149,6 +217,42 @@ class _CenterTimerState extends State<CenterTimer> {
   }
 }
 
+class PieChartLegend extends StatefulWidget {
+  final List<BlockType> blockTypes;
+  PieChartLegend({Key? key, required this.blockTypes}) : super(key: key);
+
+  @override
+  _PieChartLegendState createState() => _PieChartLegendState();
+}
+
+class _PieChartLegendState extends State<PieChartLegend> {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        for (var blockType in widget.blockTypes)
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Icon(
+                  blockType.icon,
+                  color: blockType.color,
+                ),
+                SizedBox(
+                  width: 10,
+                ),
+                Text(blockType.name),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 // A 360 degree Piechart with total length of 24 hours
 class PieChart extends StatefulWidget {
   PieChart({
@@ -165,27 +269,27 @@ class PieChart extends StatefulWidget {
 }
 
 class _PieChartState extends State<PieChart> {
-  late List<double> data;
-
   @override
   Widget build(BuildContext context) {
-    var types = widget.blockTypes.length;
+    // Calculate the total length of all time blocks
+    double total = 0;
+    for (var block in widget.timeBlocks) {
+      total += block.endTime.difference(block.startTime).inSeconds;
+    }
 
-    data = [
-      for (int i = 0; i < types; i++)
-        widget.timeBlocks
-            .where((element) => element.type == i)
-            .map((e) => e.endTime.difference(e.startTime).inSeconds)
-            .reduce((a, b) => a + b)
-            .toDouble()
+    List<Tuple<BlockType, int>> data = [
+      for (var block in widget.timeBlocks)
+        Tuple(
+          widget.blockTypes[block.type],
+          block.endTime.difference(block.startTime).inSeconds,
+        ),
     ];
 
-    double total = data.reduce((a, b) => a + b);
     return Padding(
       padding: const EdgeInsets.all(28.0),
       child: SizedBox(
         width: 200,
-        height: 200,
+        height: 100,
         child: CustomPaint(
           painter: PieChartPainter(data, total, widget.blockTypes),
         ),
@@ -194,8 +298,14 @@ class _PieChartState extends State<PieChart> {
   }
 }
 
+class Tuple<X, Y> {
+  final X item1;
+  final Y item2;
+  Tuple(this.item1, this.item2);
+}
+
 class PieChartPainter extends CustomPainter {
-  final List<double> data;
+  final List<Tuple<BlockType, int>> data;
   final double total;
   final List<BlockType> blockTypes;
 
@@ -204,16 +314,16 @@ class PieChartPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     double radius = size.width / 2;
-    double startAngle = 0;
+    double startAngle = pi;
     for (int i = 0; i < data.length; i++) {
-      double sweepAngle = data[i] * 2 * pi / total;
+      double sweepAngle = data[i].item2 * pi / total;
       canvas.drawArc(
           Rect.fromCircle(center: Offset(radius, radius), radius: radius),
           startAngle,
           sweepAngle,
           false,
           Paint()
-            ..color = blockTypes[i].color
+            ..color = data[i].item1.color
             ..strokeWidth = 20
             ..style = PaintingStyle.stroke);
       startAngle += sweepAngle;
@@ -232,15 +342,19 @@ class PieChartPainter extends CustomPainter {
 // The endTime is mutable
 class TimeBlock {
   final DateTime startTime;
-  DateTime endTime;
+  late DateTime endTime;
   final String title;
   final int type;
 
-  TimeBlock(
-      {required this.startTime,
-      required this.endTime,
-      required this.title,
-      required this.type});
+  // Constructor
+  TimeBlock({
+    required this.startTime,
+    endTime,
+    required this.title,
+    required this.type,
+  }) {
+    this.endTime = endTime ?? startTime;
+  }
 
   void setEndTime(DateTime newEndTime) {
     endTime = newEndTime;
@@ -251,6 +365,12 @@ class BlockType {
   final String name;
   final Color color;
   final int id;
+  final IconData icon;
 
-  BlockType({required this.name, required this.color, required this.id});
+  BlockType({
+    required this.name,
+    required this.color,
+    required this.id,
+    required this.icon,
+  });
 }
