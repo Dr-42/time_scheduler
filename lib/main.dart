@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'home_page.dart';
+import 'settings_page.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -98,48 +101,11 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Center(
         child: switch (selectedIndex) {
-          0 => const HomePage(),
+          0 => HomePage(),
           1 => const SettingsPage(),
-          2 => const AboutPage(),
           _ => throw Exception('Invalid index'),
         },
       ),
-    );
-  }
-}
-
-class HomePage extends StatelessWidget {
-  const HomePage({Key? key}) : super(key: key);
-
-  // Path: lib\main.dart
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Home Page'),
-    );
-  }
-}
-
-class SettingsPage extends StatelessWidget {
-  const SettingsPage({Key? key}) : super(key: key);
-
-  // Path: lib\main.dart
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Settings Page'),
-    );
-  }
-}
-
-class AboutPage extends StatelessWidget {
-  const AboutPage({Key? key}) : super(key: key);
-
-  // Path: lib\main.dart
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text('About Page'),
     );
   }
 }
