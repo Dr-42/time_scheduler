@@ -9,9 +9,9 @@ class HomePage extends StatelessWidget {
   // User can add new block types
   // User cannot delete block types
   final List<BlockType> blockTypes = [
-    BlockType(name: "Sleep", color: Colors.blue, id: 0),
-    BlockType(name: "Work", color: Colors.red, id: 1),
-    BlockType(name: "Play", color: Colors.green, id: 2),
+    BlockType(name: "Sleep", color: Colors.blue[900]!, id: 0),
+    BlockType(name: "Work", color: Colors.red[900]!, id: 1),
+    BlockType(name: "Play", color: Colors.green[900]!, id: 2),
   ];
 
   // A list of time blocks
@@ -42,16 +42,21 @@ class HomePage extends StatelessWidget {
     )
   ];
 
-  List<double> data = [1, 2, 3];
-
   @override
   Widget build(BuildContext context) {
     var curTime = DateTime(2023, 5, 12, 16, 9, 0);
     return Column(
       children: [
-        PieChart(data: data),
+        PieChart(
+          timeBlocks: timeBlocks,
+          blockTypes: blockTypes,
+        ),
         CenterTimer(startTime: curTime),
-        for (var block in timeBlocks) TimeBlockCard(block: block),
+        for (var block in timeBlocks)
+          TimeBlockCard(
+            block: block,
+            blockTypes: blockTypes,
+          ),
       ],
     );
   }
@@ -59,8 +64,19 @@ class HomePage extends StatelessWidget {
 
 class TimeBlockCard extends StatelessWidget {
   final TimeBlock block;
+  final List<BlockType> blockTypes;
 
-  const TimeBlockCard({Key? key, required this.block}) : super(key: key);
+  TimeBlockCard({
+    Key? key,
+    required this.block,
+    required this.blockTypes,
+  }) : super(key: key);
+
+  //final List<BlockType> blockTypes = [
+  //  BlockType(name: "Sleep", color: Colors.blue[900]!, id: 0),
+  //  BlockType(name: "Work", color: Colors.red[900]!, id: 1),
+  //  BlockType(name: "Play", color: Colors.green[900]!, id: 2),
+  //];
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +85,7 @@ class TimeBlockCard extends StatelessWidget {
         title: Text(block.title),
         subtitle: Text(
             "${block.startTime.hour}:${block.startTime.minute} - ${block.endTime.hour}:${block.endTime.minute}"),
+        tileColor: blockTypes[block.type].color,
       ),
     );
   }
@@ -133,21 +150,44 @@ class _CenterTimerState extends State<CenterTimer> {
 }
 
 // A 360 degree Piechart with total length of 24 hours
-class PieChart extends StatelessWidget {
-  final List<double> data;
+class PieChart extends StatefulWidget {
+  PieChart({
+    Key? key,
+    required this.blockTypes,
+    required this.timeBlocks,
+  }) : super(key: key);
 
-  const PieChart({Key? key, required this.data}) : super(key: key);
+  final List<BlockType> blockTypes;
+  final List<TimeBlock> timeBlocks;
+
+  @override
+  State<PieChart> createState() => _PieChartState();
+}
+
+class _PieChartState extends State<PieChart> {
+  late List<double> data;
 
   @override
   Widget build(BuildContext context) {
+    var types = widget.blockTypes.length;
+
+    data = [
+      for (int i = 0; i < types; i++)
+        widget.timeBlocks
+            .where((element) => element.type == i)
+            .map((e) => e.endTime.difference(e.startTime).inSeconds)
+            .reduce((a, b) => a + b)
+            .toDouble()
+    ];
+
     double total = data.reduce((a, b) => a + b);
     return Padding(
       padding: const EdgeInsets.all(28.0),
       child: SizedBox(
         width: 200,
-        height: 100,
+        height: 200,
         child: CustomPaint(
-          painter: PieChartPainter(data, total),
+          painter: PieChartPainter(data, total, widget.blockTypes),
         ),
       ),
     );
@@ -157,34 +197,24 @@ class PieChart extends StatelessWidget {
 class PieChartPainter extends CustomPainter {
   final List<double> data;
   final double total;
+  final List<BlockType> blockTypes;
 
-  PieChartPainter(this.data, this.total);
+  PieChartPainter(this.data, this.total, this.blockTypes);
 
   @override
   void paint(Canvas canvas, Size size) {
     double radius = size.width / 2;
     double startAngle = 0;
     for (int i = 0; i < data.length; i++) {
-      double sweepAngle = -data[i] * pi / total;
-      canvas.drawArc(
-        Rect.fromCircle(center: Offset(radius, radius), radius: radius),
-        startAngle,
-        sweepAngle,
-        false,
-        Paint()
-          ..color = Colors.accents[i]
-          ..strokeWidth = 20
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round,
-      );
+      double sweepAngle = data[i] * 2 * pi / total;
       canvas.drawArc(
           Rect.fromCircle(center: Offset(radius, radius), radius: radius),
           startAngle,
           sweepAngle,
           false,
           Paint()
-            ..color = Colors.primaries[i]
-            ..strokeWidth = 10
+            ..color = blockTypes[i].color
+            ..strokeWidth = 20
             ..style = PaintingStyle.stroke);
       startAngle += sweepAngle;
     }
