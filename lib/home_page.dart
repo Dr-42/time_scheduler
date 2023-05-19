@@ -184,8 +184,9 @@ class _PieChartLegendState extends State<PieChartLegend> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Icon(
-                  blockType.icon,
+                Container(
+                  width: 20,
+                  height: 20,
                   color: blockType.color,
                 ),
                 SizedBox(
@@ -312,12 +313,10 @@ class BlockType {
   final String name;
   final Color color;
   final int id;
-  final IconData icon;
 
   BlockType({
     required this.name,
     required this.color,
     required this.id,
-    required this.icon,
   });
 }

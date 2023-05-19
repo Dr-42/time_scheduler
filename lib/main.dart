@@ -33,19 +33,16 @@ class MyHomePage extends StatefulWidget {
       name: "Sleep",
       color: Color.fromARGB(255, 102, 58, 5),
       id: 0,
-      icon: Icons.bedtime,
     ),
     BlockType(
       name: "Work",
       color: Colors.purple[800]!,
       id: 1,
-      icon: Icons.work,
     ),
     BlockType(
       name: "Play",
       color: Colors.amber[800]!,
       id: 2,
-      icon: Icons.sports_esports,
     ),
   ];
 
@@ -171,65 +168,121 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       //Different floating action buttons for different pages
       floatingActionButton: switch (selectedIndex) {
-        0 => FloatingActionButton(
-            onPressed: () {
-              //New popup window to add a new block
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: const Text('Next Task'),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextField(
-                          decoration: const InputDecoration(
-                            labelText: 'Task Name',
-                          ),
-                        ),
-                        DropdownButtonFormField(
-                          decoration: const InputDecoration(
-                            labelText: 'Task Type',
-                          ),
-                          items: [
-                            for (var blockType in widget.blockTypes)
-                              DropdownMenuItem(
-                                value: blockType,
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      blockType.icon,
-                                      color: blockType.color,
-                                    ),
-                                    Text(blockType.name),
-                                  ],
-                                ),
+        0 => Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              FloatingActionButton(
+                tooltip: "Add a block type",
+                child: const Icon(Icons.add_box),
+                onPressed: () {
+                  //New popup window to add a new blocktype
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('New Block Type'),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TextField(
+                              decoration: const InputDecoration(
+                                labelText: 'Block Type Name',
                               ),
+                            ),
+                            /*ColorPicker(
+                              onColorChanged: (color) {},
+                              color: Colors.blue,
+                              heading: Text('Task Color'),
+                            ),*/
                           ],
-                          onChanged: (value) {},
+                          /*ColorPicker(
+                            onColorChanged: (color) {},
+                            color: Colors.blue,
+                            heading: Text('Task Color'),
+                          ),*/
                         ),
-                      ],
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text('Add'),
-                      ),
-                    ],
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: const Text('Add'),
+                          ),
+                        ],
+                      );
+                    },
                   );
                 },
-              );
-            },
-            tooltip: 'Next Block',
-            child: const Icon(Icons.next_plan),
+              ),
+              const SizedBox(height: 10),
+              FloatingActionButton(
+                onPressed: () {
+                  //New popup window to add a new block
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('Next Task'),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TextField(
+                              decoration: const InputDecoration(
+                                labelText: 'Task Name',
+                              ),
+                            ),
+                            DropdownButtonFormField(
+                              decoration: const InputDecoration(
+                                labelText: 'Task Type',
+                              ),
+                              items: [
+                                for (var blockType in widget.blockTypes)
+                                  DropdownMenuItem(
+                                    value: blockType,
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 20,
+                                          height: 20,
+                                          color: blockType.color,
+                                        ),
+                                        Text(" ${blockType.name}"),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                              onChanged: (value) {},
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: const Text('Add'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                tooltip: 'Next Block',
+                child: const Icon(Icons.next_plan),
+              ),
+            ],
           ),
         1 => FloatingActionButton(
             onPressed: () {},
