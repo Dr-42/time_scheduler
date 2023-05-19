@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -254,6 +255,8 @@ func main() {
 	// Initialize the HTTP routes
 	http.HandleFunc("/blocktypes", handleBlockTypes)
 	http.HandleFunc("/timeblocks", handleTimeBlocks)
+	http.HandleFunc("/currentblockname", handleCurrentBlockName)
+	http.HandleFunc("/currentblocktype", handleCurrentBlockType)
 
 	// Start the HTTP server
 	fmt.Println("Server listening on port 8080")
@@ -358,4 +361,154 @@ func handleTimeBlocks(w http.ResponseWriter, r *http.Request) {
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
+}
+
+func handleCurrentBlockName(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		// Get the current block name
+		currentBlockName, err := getCurrentBlockName()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			fmt.Println("GET /currentblockname - Internal server error")
+			fmt.Println(err)
+			return
+		}
+		// Return the current block name
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(currentBlockName)
+		fmt.Println("GET /currentblockname")
+	case http.MethodPost:
+		// Set the current block name
+		var newCurrentBlockName string
+		err := json.NewDecoder(r.Body).Decode(&newCurrentBlockName)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			fmt.Println("POST /currentblockname - Bad request")
+			fmt.Println(err)
+			fmt.Println(r.Body)
+			fmt.Println(newCurrentBlockName)
+			return
+		}
+		// Save the new current block name
+		file, err := os.OpenFile("currentblockname.txt", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+		if err != nil {
+			if os.IsNotExist(err) {
+				file, err = os.Create("currentblockname.txt")
+			} else {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				fmt.Println("POST /currentblockname - Internal server error")
+				fmt.Println(err)
+				return
+			}
+		}
+		defer file.Close()
+
+		_, err = file.WriteString(newCurrentBlockName)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			fmt.Println("POST /currentblockname - Internal server error")
+			fmt.Println(err)
+			return
+		}
+		w.WriteHeader(http.StatusCreated)
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
+func getCurrentBlockName() (string, error) {
+	file, err := os.Open("currentblockname.txt")
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "Setting up server", nil
+		}
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	scanner.Scan()
+	return scanner.Text(), nil
+}
+
+func handleCurrentBlockType(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		// Get the current block type
+		currentBlockType, err := getCurrentBlockType()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			fmt.Println("GET /currentblocktype - Internal server error")
+			fmt.Println(err)
+			return
+		}
+		// Return the current block type
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(currentBlockType)
+		fmt.Println("GET /currentblocktype")
+	case http.MethodPost:
+		// Set the current block type
+		var newCurrentBlockType int
+		err := json.NewDecoder(r.Body).Decode(&newCurrentBlockType)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			fmt.Println("POST /currentblocktype - Bad request")
+			fmt.Println(err)
+			fmt.Println(r.Body)
+			fmt.Println(newCurrentBlockType)
+			return
+		}
+		// Save the new current block type
+		file, err := os.OpenFile("currentblocktype.txt", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+		if err != nil {
+			if os.IsNotExist(err) {
+				file, err = os.Create("currentblocktype.txt")
+			} else {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				fmt.Println("POST /currentblocktype - Internal server error")
+				fmt.Println(err)
+				return
+			}
+		}
+		defer file.Close()
+
+		_, err = file.WriteString(strconv.Itoa(newCurrentBlockType))
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			fmt.Println("POST /currentblocktype - Internal server error")
+			fmt.Println(err)
+			return
+		}
+
+		w.WriteHeader(http.StatusCreated)
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
+func getCurrentBlockType() (int, error) {
+	file, err := os.Open("currentblocktype.txt")
+	if err != nil {
+		if os.IsNotExist(err) {
+			os.Create("currentblocktype.txt")
+			if err != nil {
+				return 0, err
+			}
+			return 0, nil
+		} else {
+			return 0, err
+		}
+	}
+
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	scanner.Scan()
+	currentBlockType, err := strconv.Atoi(scanner.Text())
+	if err != nil {
+		return 0, err
+	}
+	return currentBlockType, nil
 }
