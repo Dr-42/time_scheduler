@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 import 'home_page.dart';
 import 'settings_page.dart';
@@ -189,11 +190,12 @@ class _MyHomePageState extends State<MyHomePage> {
                                 labelText: 'Block Type Name',
                               ),
                             ),
-                            /*ColorPicker(
+                            Text("Block Color"),
+                            ColorPicker(
                               onColorChanged: (color) {},
-                              color: Colors.blue,
-                              heading: Text('Task Color'),
-                            ),*/
+                              pickerColor: Colors.blue,
+                              enableAlpha: false,
+                            ),
                           ],
                           /*ColorPicker(
                             onColorChanged: (color) {},

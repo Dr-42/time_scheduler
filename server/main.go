@@ -42,9 +42,9 @@ type BlockType struct {
 }
 
 type Color struct {
-	H int `json:"h"`
-	S int `json:"s"`
-	V int `json:"v"`
+	R int `json:"r"`
+	G int `json:"g"`
+	B int `json:"b"`
 }
 
 func (b BlockType) Save() error {
@@ -94,9 +94,9 @@ func (b BlockType) CheckIdentical(blockTypes []BlockType) bool {
 			identical = true
 			break
 		}
-		if blockType.Color.H == b.Color.H &&
-			blockType.Color.S == b.Color.S &&
-			blockType.Color.V == b.Color.V {
+		if blockType.Color.R == b.Color.R &&
+			blockType.Color.G == b.Color.G &&
+			blockType.Color.B == b.Color.B {
 			identical = true
 			break
 		}
@@ -119,7 +119,7 @@ func getBlockTypes() ([]BlockType, error) {
 			if err != nil {
 				return nil, err
 			}
-			_, err = file.WriteString("[{\"id\": 0, \"name\": \"System\", \"color\": {\"h\": 0, \"s\": 0, \"v\": 0}}]")
+			_, err = file.WriteString("[{\"id\": 0, \"name\": \"System\", \"color\": {\"r\": 20, \"g\": 20, \"b\": 200}}]")
 			if err != nil {
 				return nil, err
 			}
@@ -128,9 +128,9 @@ func getBlockTypes() ([]BlockType, error) {
 				ID:   0,
 				Name: "System",
 				Color: Color{
-					H: 0,
-					S: 0,
-					V: 0,
+					R: 20,
+					G: 20,
+					B: 200,
 				},
 			}
 			var newBlockTypes []BlockType
