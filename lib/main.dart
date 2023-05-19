@@ -217,19 +217,25 @@ class _MyHomePageState extends State<MyHomePage> {
                   showDialog(
                     context: context,
                     builder: (BuildContext context) {
+                      var nameController = TextEditingController();
+                      Color col = Colors.blue;
+
                       return AlertDialog(
                         title: const Text('New Block Type'),
                         content: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             TextField(
+                              controller: nameController,
                               decoration: const InputDecoration(
                                 labelText: 'Block Type Name',
                               ),
                             ),
                             Text("Block Color"),
                             ColorPicker(
-                              onColorChanged: (color) {},
+                              onColorChanged: (color) {
+                                col = color;
+                              },
                               pickerColor: Colors.blue,
                               enableAlpha: false,
                             ),
@@ -249,6 +255,14 @@ class _MyHomePageState extends State<MyHomePage> {
                           ),
                           TextButton(
                             onPressed: () {
+                              //Post new block type to server
+                              var blockType = BlockType(
+                                name: nameController.text,
+                                color: col,
+                                id: 0,
+                              );
+
+                              postBlockType(blockType);
                               Navigator.pop(context);
                             },
                             child: const Text('Add'),
@@ -331,5 +345,27 @@ class _MyHomePageState extends State<MyHomePage> {
         _ => throw Exception('Invalid index'),
       },
     );
+  }
+
+  void postBlockType(BlockType blockType) {
+    var url = Uri.parse('http://localhost:8080/blocktypes');
+    var response = http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(blockType.toJson()),
+    );
+
+    response.then((value) {
+      if (value.statusCode == 201) {
+        setState(() {
+          var blockTypesFuture = fetchBlockTypes();
+          blockTypesFuture.then((value) => setState(() {
+                widget.blockTypes = value;
+              }));
+        });
+      }
+    });
   }
 }

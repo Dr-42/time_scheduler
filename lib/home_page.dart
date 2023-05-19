@@ -342,4 +342,16 @@ class BlockType {
       id: json['id'],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'color': {
+        'r': color.red,
+        'g': color.green,
+        'b': color.blue,
+      },
+      'id': id,
+    };
+  }
 }
