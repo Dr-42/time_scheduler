@@ -3,71 +3,18 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatelessWidget {
-  HomePage({Key? key}) : super(key: key);
+  final List<BlockType> blockTypes;
+  final List<TimeBlock> timeBlocks;
+
+  const HomePage({
+    Key? key,
+    required this.blockTypes,
+    required this.timeBlocks,
+  }) : super(key: key);
 
   // A list of block types
   // User can add new block types
   // User cannot delete block types
-  final List<BlockType> blockTypes = [
-    BlockType(
-      name: "Sleep",
-      color: Color.fromARGB(255, 102, 58, 5)!,
-      id: 0,
-      icon: Icons.bedtime,
-    ),
-    BlockType(
-      name: "Work",
-      color: Colors.purple[800]!,
-      id: 1,
-      icon: Icons.work,
-    ),
-    BlockType(
-      name: "Play",
-      color: Colors.amber[800]!,
-      id: 2,
-      icon: Icons.sports_esports,
-    ),
-  ];
-
-  // A list of time blocks
-  // User can add new time blocks
-  // User cannot delete time blocks
-  final List<TimeBlock> timeBlocks = [
-    TimeBlock(
-        //Today 6 AM
-        startTime: DateTime.now().subtract(Duration(hours: 24)),
-        endTime: DateTime.now().subtract(Duration(hours: 16)),
-        title: "Sleep",
-        type: 0),
-    TimeBlock(
-        startTime: DateTime.now().subtract(Duration(hours: 16)),
-        endTime: DateTime.now().subtract(Duration(hours: 8)),
-        title: "Work",
-        type: 1),
-    TimeBlock(
-        startTime: DateTime.now().subtract(Duration(hours: 8)),
-        endTime: DateTime.now().subtract(Duration(hours: 6)),
-        title: "Play",
-        type: 2),
-    TimeBlock(
-      startTime: DateTime.now().subtract(Duration(hours: 6)),
-      endTime: DateTime.now().subtract(Duration(hours: 4)),
-      title: "Evening Sleep",
-      type: 0,
-    ),
-    TimeBlock(
-      startTime: DateTime.now().subtract(Duration(hours: 4)),
-      endTime: DateTime.now().subtract(Duration(hours: 1)),
-      title: "Evening Work",
-      type: 1,
-    ),
-    TimeBlock(
-        startTime: DateTime.now().subtract(Duration(hours: 1)),
-        endTime: DateTime.now(),
-        title: "Evening Play",
-        type: 2),
-  ];
-
   @override
   Widget build(BuildContext context) {
     var curTime = DateTime(2023, 5, 12, 16, 9, 0);
