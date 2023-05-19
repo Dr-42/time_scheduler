@@ -313,7 +313,7 @@ func handleBlockTypes(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		// Assign a unique ID to the new block type
-		newBlockType.ID = len(blockTypes) + 1
+		newBlockType.ID = len(blockTypes)
 		err = newBlockType.Save()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
