@@ -38,11 +38,13 @@ func (t Time) FileName() string {
 type BlockType struct {
 	ID    int    `json:"id"`
 	Name  string `json:"name"`
-	Color struct {
-		H int `json:"h"`
-		S int `json:"s"`
-		V int `json:"v"`
-	} `json:"color"`
+	Color Color  `json:"color"`
+}
+
+type Color struct {
+	H int `json:"h"`
+	S int `json:"s"`
+	V int `json:"v"`
 }
 
 func (b BlockType) Save() error {
@@ -117,11 +119,23 @@ func getBlockTypes() ([]BlockType, error) {
 			if err != nil {
 				return nil, err
 			}
-			_, err = file.WriteString("[]")
+			_, err = file.WriteString("[{\"id\": 0, \"name\": \"System\", \"color\": {\"h\": 0, \"s\": 0, \"v\": 0}}]")
 			if err != nil {
 				return nil, err
 			}
-			return []BlockType{}, nil
+
+			var newBlockType = BlockType{
+				ID:   0,
+				Name: "System",
+				Color: Color{
+					H: 0,
+					S: 0,
+					V: 0,
+				},
+			}
+			var newBlockTypes []BlockType
+			newBlockTypes = append(newBlockTypes, newBlockType)
+			return newBlockTypes, nil
 		} else {
 			return nil, err
 		}
@@ -419,10 +433,17 @@ func handleCurrentBlockName(w http.ResponseWriter, r *http.Request) {
 }
 
 func getCurrentBlockName() (string, error) {
-	file, err := os.Open("currentblockname.txt")
+	file, err := os.OpenFile("currentblockname.txt", os.O_RDWR, 0755)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return "Setting up server", nil
+			file, err = os.Create("currentblockname.txt")
+			if err != nil {
+				return "", err
+			}
+			_, err = file.WriteString("Setting up server")
+			return "Setting up server", err
+		} else {
+			return "", err
 		}
 	}
 	defer file.Close()
@@ -489,10 +510,12 @@ func handleCurrentBlockType(w http.ResponseWriter, r *http.Request) {
 }
 
 func getCurrentBlockType() (int, error) {
-	file, err := os.Open("currentblocktype.txt")
+	file, err := os.OpenFile("currentblocktype.txt", os.O_RDWR, 0755)
 	if err != nil {
 		if os.IsNotExist(err) {
-			os.Create("currentblocktype.txt")
+			file, err = os.Create("currentblocktype.txt")
+			//Add zero to file
+			_, err = file.WriteString("0")
 			if err != nil {
 				return 0, err
 			}
@@ -501,7 +524,6 @@ func getCurrentBlockType() (int, error) {
 			return 0, err
 		}
 	}
-
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
