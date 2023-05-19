@@ -18,6 +18,13 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var curTime = DateTime(2023, 5, 12, 16, 9, 0);
+
+    if (blockTypes.isEmpty) {
+      return Center(
+        child: Text("No block types"),
+      );
+    }
+
     return Column(
       children: [
         Container(
@@ -319,4 +326,20 @@ class BlockType {
     required this.color,
     required this.id,
   });
+
+  static BlockType fromJson(Map<String, dynamic> json) {
+    //Color in json is stored as color : {r: 255, g: 255, b: 255, a: 255}
+    //We need to convert it to Color.fromARGB(255, r, g, b)
+    Map<String, dynamic> colorJson = json['color'];
+    return BlockType(
+      name: json['name'],
+      color: Color.fromARGB(
+        255,
+        colorJson['r'],
+        colorJson['g'],
+        colorJson['b'],
+      ),
+      id: json['id'],
+    );
+  }
 }

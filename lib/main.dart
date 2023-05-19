@@ -4,6 +4,33 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'home_page.dart';
 import 'settings_page.dart';
 
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+Future<List<BlockType>> fetchBlockTypes() async {
+  //Check if the server is running
+  var serverRunning = false;
+  while (!serverRunning) {
+    try {
+      var response =
+          await http.get(Uri.parse('http://localhost:8080/blocktypes'));
+      if (response.statusCode == 200) {
+        serverRunning = true;
+      }
+    } catch (e) {
+      serverRunning = false;
+    }
+  }
+  var response = await http.get(Uri.parse('http://localhost:8080/blocktypes'));
+  if (response.statusCode == 200) {
+    final List<Map<String, dynamic>> jsonList =
+        List<Map<String, dynamic>>.from(json.decode(response.body));
+    return jsonList.map((json) => BlockType.fromJson(json)).toList();
+  } else {
+    return [];
+  }
+}
+
 void main() {
   runApp(const MyApp());
 }
@@ -28,8 +55,9 @@ class MyHomePage extends StatefulWidget {
   MyHomePage({Key? key, required this.title}) : super(key: key);
 
   final String title;
+  List<BlockType> blockTypes = [];
 
-  final List<BlockType> blockTypes = [
+  /*final List<BlockType> blockTypes = [
     BlockType(
       name: "Sleep",
       color: Color.fromARGB(255, 102, 58, 5),
@@ -45,7 +73,7 @@ class MyHomePage extends StatefulWidget {
       color: Colors.amber[800]!,
       id: 2,
     ),
-  ];
+  ];*/
 
   // A list of time blocks
   // User can add new time blocks
@@ -61,12 +89,12 @@ class MyHomePage extends StatefulWidget {
         startTime: DateTime.now().subtract(Duration(hours: 16)),
         endTime: DateTime.now().subtract(Duration(hours: 8)),
         title: "Work",
-        type: 1),
+        type: 0),
     TimeBlock(
         startTime: DateTime.now().subtract(Duration(hours: 8)),
         endTime: DateTime.now().subtract(Duration(hours: 6)),
         title: "Play",
-        type: 2),
+        type: 0),
     TimeBlock(
       startTime: DateTime.now().subtract(Duration(hours: 6)),
       endTime: DateTime.now().subtract(Duration(hours: 4)),
@@ -77,13 +105,13 @@ class MyHomePage extends StatefulWidget {
       startTime: DateTime.now().subtract(Duration(hours: 4)),
       endTime: DateTime.now().subtract(Duration(hours: 1)),
       title: "Evening Work",
-      type: 1,
+      type: 0,
     ),
     TimeBlock(
         startTime: DateTime.now().subtract(Duration(hours: 1)),
         endTime: DateTime.now(),
         title: "Evening Play",
-        type: 2),
+        type: 0),
   ];
 
   @override
@@ -93,9 +121,18 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   var selectedIndex = 0;
 
+  late Future<List<BlockType>> blockTypesFuture;
+
   // Path: lib\main.dart
   @override
   Widget build(BuildContext context) {
+    if (widget.blockTypes.isEmpty) {
+      var blockTypesFuture = fetchBlockTypes();
+      blockTypesFuture.then((value) => setState(() {
+            widget.blockTypes = value;
+          }));
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
