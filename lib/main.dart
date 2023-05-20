@@ -324,7 +324,8 @@ class _MyHomePageState extends State<MyHomePage> {
           ? HomePage(
               timeBlocks: widget.timeBlocks,
               blockTypes: widget.blockTypes,
-              currentBlockName: widget.currentBlockName,
+              currentBlockName:
+                  widget.currentBlockName.replaceAll("\"", "").trim(),
               currentBlockType: widget.currentBlockType,
             )
           : selectedIndex == 0 && widget.timeBlocks.isEmpty
