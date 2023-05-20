@@ -194,6 +194,28 @@ func CheckNewOverlap(ts []TimeBlock, t TimeBlock) bool {
 }
 
 func (t TimeBlock) Save() error {
+
+	splitBlock := TimeBlock{
+		StartTime: Time{
+			Year:   t.StartTime.Year,
+			Month:  t.StartTime.Month,
+			Day:    t.EndTime.Day,
+			Hour:   0,
+			Minute: 0,
+			Second: 0,
+		},
+		EndTime:     t.EndTime,
+		BlockTypeID: t.BlockTypeID,
+		Title:       t.Title,
+	}
+	if t.StartTime.Day != t.EndTime.Day {
+		t.EndTime.Day = t.StartTime.Day
+		t.EndTime.Hour = 23
+		t.EndTime.Minute = 59
+		t.EndTime.Second = 59
+		splitBlock.Save()
+	}
+
 	// Get all time blocks for the day
 	timeBlocks, err := getDayTimeBlocks(t.StartTime.Year, t.StartTime.Month, t.StartTime.Day)
 	if err != nil {
