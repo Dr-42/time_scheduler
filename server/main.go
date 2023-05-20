@@ -155,9 +155,10 @@ func getBlockTypes() ([]BlockType, error) {
 
 // TimeBlock represents the structure of a time block
 type TimeBlock struct {
-	StartTime   Time `json:"startTime"`
-	EndTime     Time `json:"endTime"`
-	BlockTypeID int  `json:"blockTypeId"`
+	StartTime   Time   `json:"startTime"`
+	EndTime     Time   `json:"endTime"`
+	BlockTypeID int    `json:"blockTypeId"`
+	Title       string `json:"title"`
 }
 
 func CheckOverlaps(t []TimeBlock) bool {
@@ -322,6 +323,7 @@ func handleBlockTypes(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusCreated)
+		fmt.Println("POST /blocktypes")
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
@@ -345,6 +347,11 @@ func handleTimeBlocks(w http.ResponseWriter, r *http.Request) {
 		l_month, _ := strconv.Atoi(month)
 		l_day, _ := strconv.Atoi(day)
 		timeBlocks, _ := getDayTimeBlocks(l_year, l_month, l_day)
+
+		if timeBlocks == nil {
+			timeBlocks = []TimeBlock{}
+		}
+
 		json.NewEncoder(w).Encode(timeBlocks)
 		fmt.Println("GET /timeblocks?year=" + year + "&month=" + month + "&day=" + day)
 	case http.MethodPost:
@@ -372,6 +379,7 @@ func handleTimeBlocks(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.WriteHeader(http.StatusCreated)
+		fmt.Println("POST /timeblocks")
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
@@ -427,6 +435,7 @@ func handleCurrentBlockName(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(http.StatusCreated)
+		fmt.Println("POST /currentblockname")
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
@@ -504,6 +513,7 @@ func handleCurrentBlockType(w http.ResponseWriter, r *http.Request) {
 		}
 
 		w.WriteHeader(http.StatusCreated)
+		fmt.Println("POST /currentblocktype")
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}

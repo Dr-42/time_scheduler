@@ -314,6 +314,54 @@ class TimeBlock {
   void setEndTime(DateTime newEndTime) {
     endTime = newEndTime;
   }
+
+  // Convert to json
+  Map<String, dynamic> toJson() {
+    return {
+      'startTime': {
+        'year': startTime.year,
+        'month': startTime.month,
+        'day': startTime.day,
+        'hour': startTime.hour,
+        'minute': startTime.minute,
+        'second': startTime.second,
+      },
+      'endTime': {
+        'year': endTime.year,
+        'month': endTime.month,
+        'day': endTime.day,
+        'hour': endTime.hour,
+        'minute': endTime.minute,
+        'second': endTime.second,
+      },
+      'title': title,
+      'blockTypeId': type,
+    };
+  }
+
+  // Convert from json
+  static TimeBlock fromJson(Map<String, dynamic> json) {
+    return TimeBlock(
+      startTime: DateTime(
+        json['startTime']['year'],
+        json['startTime']['month'],
+        json['startTime']['day'],
+        json['startTime']['hour'],
+        json['startTime']['minute'],
+        json['startTime']['second'],
+      ),
+      endTime: DateTime(
+        json['endTime']['year'],
+        json['endTime']['month'],
+        json['endTime']['day'],
+        json['endTime']['hour'],
+        json['endTime']['minute'],
+        json['endTime']['second'],
+      ),
+      title: json['title'],
+      type: json['blockTypeId'],
+    );
+  }
 }
 
 class BlockType {

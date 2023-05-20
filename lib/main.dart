@@ -31,6 +31,75 @@ Future<List<BlockType>> fetchBlockTypes() async {
   }
 }
 
+Future<List<TimeBlock>> fetchTimeBlocks() async {
+  //Check if the server is running
+  var query =
+      'http://localhost:8080/timeblocks?year=${DateTime.now().year}&month=${DateTime.now().month}&day=${DateTime.now().day}';
+  var serverRunning = false;
+  while (!serverRunning) {
+    try {
+      var response = await http.get(Uri.parse(query));
+      if (response.statusCode == 200) {
+        serverRunning = true;
+      }
+    } catch (e) {
+      serverRunning = false;
+    }
+  }
+  var response = await http.get(Uri.parse(query));
+  if (response.statusCode == 200) {
+    final List<Map<String, dynamic>> jsonList =
+        List<Map<String, dynamic>>.from(json.decode(response.body));
+    return jsonList.map((json) => TimeBlock.fromJson(json)).toList();
+  } else {
+    return [];
+  }
+}
+
+Future<String> fetchCurrentBlockName() async {
+  var query = 'http://localhost:8080/currentblockname';
+  var serverRunning = false;
+  while (!serverRunning) {
+    try {
+      var response = await http.get(Uri.parse(query));
+      if (response.statusCode == 200) {
+        serverRunning = true;
+      }
+    } catch (e) {
+      serverRunning = false;
+    }
+  }
+
+  var response = await http.get(Uri.parse(query));
+  if (response.statusCode == 200) {
+    return response.body;
+  } else {
+    return "";
+  }
+}
+
+Future<int> fetchCurrentBlockType() async {
+  var query = 'http://localhost:8080/currentblocktype';
+  var serverRunning = false;
+  while (!serverRunning) {
+    try {
+      var response = await http.get(Uri.parse(query));
+      if (response.statusCode == 200) {
+        serverRunning = true;
+      }
+    } catch (e) {
+      serverRunning = false;
+    }
+  }
+
+  var response = await http.get(Uri.parse(query));
+  if (response.statusCode == 200) {
+    return int.parse(response.body);
+  } else {
+    return 0;
+  }
+}
+
 void main() {
   runApp(const MyApp());
 }
@@ -56,6 +125,9 @@ class MyHomePage extends StatefulWidget {
 
   final String title;
   List<BlockType> blockTypes = [];
+  String currentBlockName = "";
+  int currentBlockType = 0;
+  bool pinged = false;
 
   /*final List<BlockType> blockTypes = [
     BlockType(
@@ -78,7 +150,7 @@ class MyHomePage extends StatefulWidget {
   // A list of time blocks
   // User can add new time blocks
   // User cannot delete time blocks
-  final List<TimeBlock> timeBlocks = [
+  /*final List<TimeBlock> timeBlocks = [
     TimeBlock(
         //Today 6 AM
         startTime: DateTime.now().subtract(Duration(hours: 24)),
@@ -112,7 +184,8 @@ class MyHomePage extends StatefulWidget {
         endTime: DateTime.now(),
         title: "Evening Play",
         type: 0),
-  ];
+  ];*/
+  List<TimeBlock> timeBlocks = [];
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -122,6 +195,9 @@ class _MyHomePageState extends State<MyHomePage> {
   var selectedIndex = 0;
 
   late Future<List<BlockType>> blockTypesFuture;
+  late Future<List<TimeBlock>> timeBlocksFuture;
+  late String currentBlockName;
+  late int currentBlockType;
 
   // Path: lib\main.dart
   @override
@@ -130,6 +206,21 @@ class _MyHomePageState extends State<MyHomePage> {
       var blockTypesFuture = fetchBlockTypes();
       blockTypesFuture.then((value) => setState(() {
             widget.blockTypes = value;
+          }));
+    }
+
+    if (widget.timeBlocks.isEmpty && !widget.pinged) {
+      var timeBlocksFuture = fetchTimeBlocks();
+      timeBlocksFuture.then((value) => setState(() {
+            widget.timeBlocks = value;
+          }));
+      widget.pinged = true;
+    }
+
+    if (widget.currentBlockName == "") {
+      var currentBlockNameFuture = fetchCurrentBlockName();
+      currentBlockNameFuture.then((value) => setState(() {
+            widget.currentBlockName = value;
           }));
     }
 
@@ -194,16 +285,18 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-      body: Center(
-        child: switch (selectedIndex) {
-          0 => HomePage(
+      body: selectedIndex == 0 && widget.timeBlocks.isNotEmpty
+          ? HomePage(
               timeBlocks: widget.timeBlocks,
               blockTypes: widget.blockTypes,
-            ),
-          1 => const SettingsPage(),
-          _ => throw Exception('Invalid index'),
-        },
-      ),
+            )
+          : selectedIndex == 0 && widget.timeBlocks.isEmpty
+              ? const Center(
+                  child: Text("Please add a time block"),
+                )
+              : selectedIndex == 1
+                  ? const SettingsPage()
+                  : throw Exception('Invalid index'),
       //Different floating action buttons for different pages
       floatingActionButton: switch (selectedIndex) {
         0 => Column(
@@ -240,11 +333,6 @@ class _MyHomePageState extends State<MyHomePage> {
                               enableAlpha: false,
                             ),
                           ],
-                          /*ColorPicker(
-                            onColorChanged: (color) {},
-                            color: Colors.blue,
-                            heading: Text('Task Color'),
-                          ),*/
                         ),
                         actions: [
                           TextButton(
@@ -280,12 +368,18 @@ class _MyHomePageState extends State<MyHomePage> {
                   showDialog(
                     context: context,
                     builder: (BuildContext context) {
+                      var nameController = TextEditingController();
+                      int nextBlockType = 0;
+                      var startTime = DateTime.now().subtract(
+                        const Duration(seconds: 2),
+                      );
                       return AlertDialog(
                         title: const Text('Next Task'),
                         content: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             TextField(
+                              controller: nameController,
                               decoration: const InputDecoration(
                                 labelText: 'Task Name',
                               ),
@@ -310,7 +404,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                     ),
                                   ),
                               ],
-                              onChanged: (value) {},
+                              onChanged: (value) {
+                                if (value != null) nextBlockType = value.id;
+                              },
                             ),
                           ],
                         ),
@@ -323,6 +419,53 @@ class _MyHomePageState extends State<MyHomePage> {
                           ),
                           TextButton(
                             onPressed: () {
+                              if (widget.timeBlocks.isNotEmpty) {
+                                startTime = widget.timeBlocks.last.endTime;
+                              }
+                              var endTime = DateTime.now();
+                              var blockName = widget.currentBlockName;
+                              var blockType = widget.currentBlockType;
+
+                              var newBlock = TimeBlock(
+                                title: blockName,
+                                type: blockType,
+                                startTime: startTime,
+                                endTime: endTime,
+                              );
+
+                              postTimeBlock(newBlock);
+                              postCurrentBlockType(nextBlockType);
+                              postCurrentBlockName(nameController.text);
+
+                              timeBlocksFuture = fetchTimeBlocks();
+                              blockTypesFuture = fetchBlockTypes();
+                              var currentNameFuture = fetchCurrentBlockName();
+                              var currentTypeFuture = fetchCurrentBlockType();
+
+                              timeBlocksFuture.then((value) {
+                                setState(() {
+                                  widget.timeBlocks = value;
+                                });
+                              });
+
+                              blockTypesFuture.then((value) {
+                                setState(() {
+                                  widget.blockTypes = value;
+                                });
+                              });
+
+                              currentNameFuture.then((value) {
+                                setState(() {
+                                  widget.currentBlockName = value;
+                                });
+                              });
+
+                              currentTypeFuture.then((value) {
+                                setState(() {
+                                  widget.currentBlockType = value;
+                                });
+                              });
+
                               Navigator.pop(context);
                             },
                             child: const Text('Add'),
@@ -363,6 +506,72 @@ class _MyHomePageState extends State<MyHomePage> {
           var blockTypesFuture = fetchBlockTypes();
           blockTypesFuture.then((value) => setState(() {
                 widget.blockTypes = value;
+              }));
+        });
+      }
+    });
+  }
+
+  void postTimeBlock(TimeBlock timeBlock) {
+    var url = Uri.parse('http://localhost:8080/timeblocks');
+    var response = http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(timeBlock.toJson()),
+    );
+
+    response.then((value) {
+      if (value.statusCode == 201) {
+        setState(() {
+          var timeBlocksFuture = fetchTimeBlocks();
+          timeBlocksFuture.then((value) => setState(() {
+                widget.timeBlocks = value;
+              }));
+        });
+      }
+    });
+  }
+
+  void postCurrentBlockName(String name) {
+    var url = Uri.parse('http://localhost:8080/currentblockname');
+    var response = http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(name),
+    );
+
+    response.then((value) {
+      if (value.statusCode == 201) {
+        setState(() {
+          var currentBlockNameFuture = fetchCurrentBlockName();
+          currentBlockNameFuture.then((value) => setState(() {
+                widget.currentBlockName = value;
+              }));
+        });
+      }
+    });
+  }
+
+  void postCurrentBlockType(int t) {
+    var url = Uri.parse('http://localhost:8080/currentblocktype');
+    var response = http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(t),
+    );
+
+    response.then((value) {
+      if (value.statusCode == 201) {
+        setState(() {
+          var currentBlockTypeFuture = fetchCurrentBlockType();
+          currentBlockTypeFuture.then((value) => setState(() {
+                widget.currentBlockType = value;
               }));
         });
       }
