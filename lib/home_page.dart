@@ -40,6 +40,7 @@ class HomePage extends StatelessWidget {
         CenterTimer(
           startTime: curTime,
           blockType: blockTypes[currentBlockType],
+          timeBlocks: timeBlocks,
         ),
         Card(
           child: Text(
@@ -56,6 +57,7 @@ class HomePage extends StatelessWidget {
             PieChart(
               timeBlocks: timeBlocks,
               blockTypes: blockTypes,
+              curBlockType: currentBlockType,
             ),
             PieChartLegend(
               blockTypes: blockTypes,
@@ -116,11 +118,13 @@ class TimeBlockCard extends StatelessWidget {
 class CenterTimer extends StatefulWidget {
   final DateTime startTime;
   final BlockType blockType;
+  final List<TimeBlock> timeBlocks;
 
   const CenterTimer({
     Key? key,
     required this.startTime,
     required this.blockType,
+    required this.timeBlocks,
   }) : super(key: key);
 
   @override
@@ -145,7 +149,7 @@ class _CenterTimerState extends State<CenterTimer> {
 
   @override
   Widget build(BuildContext context) {
-    var elapsedTime = currentTime.difference(widget.startTime);
+    var elapsedTime = currentTime.difference(widget.timeBlocks.last.endTime);
     String formattedTime =
         "${elapsedTime.inHours.toString().padLeft(2, '0')}:${elapsedTime.inMinutes.remainder(60).toString().padLeft(2, '0')}:${elapsedTime.inSeconds.remainder(60).toString().padLeft(2, '0')}";
 
@@ -217,16 +221,35 @@ class PieChart extends StatefulWidget {
     Key? key,
     required this.blockTypes,
     required this.timeBlocks,
+    required this.curBlockType,
   }) : super(key: key);
 
   final List<BlockType> blockTypes;
   final List<TimeBlock> timeBlocks;
+  final int curBlockType;
 
   @override
   State<PieChart> createState() => _PieChartState();
 }
 
 class _PieChartState extends State<PieChart> {
+  Timer? timer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Start the timer to update the chart every second
+    timer = Timer.periodic(Duration(seconds: 1), (_) {
+      setState(() {}); // Trigger a rebuild of the widget
+    });
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel(); // Cancel the timer when the widget is disposed
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     // Calculate the total length of all time blocks
@@ -242,6 +265,14 @@ class _PieChartState extends State<PieChart> {
           block.endTime.difference(block.startTime).inSeconds,
         ),
     ];
+
+    var cur_data = Tuple(
+      widget.blockTypes[widget.curBlockType],
+      DateTime.now().difference(widget.timeBlocks.last.endTime).inSeconds,
+    );
+
+    data.add(cur_data);
+    total += cur_data.item2;
 
     return Padding(
       padding: const EdgeInsets.all(28.0),
@@ -288,7 +319,6 @@ class PieChartPainter extends CustomPainter {
     }
   }
 
-  @override
   bool shouldRepaint(covariant PieChartPainter oldDelegate) {
     return oldDelegate.data != data;
   }
