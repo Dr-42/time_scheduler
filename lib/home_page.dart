@@ -190,28 +190,31 @@ class PieChartLegend extends StatefulWidget {
 class _PieChartLegendState extends State<PieChartLegend> {
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        for (var blockType in widget.blockTypes)
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Container(
-                  width: 20,
-                  height: 20,
-                  color: blockType.color,
-                ),
-                SizedBox(
-                  width: 10,
-                ),
-                Text(blockType.name),
-              ],
+    return SizedBox(
+      width: 100,
+      height: 100,
+      child: ListView(
+        children: [
+          for (var blockType in widget.blockTypes)
+            Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    color: blockType.color,
+                  ),
+                  SizedBox(
+                    width: 5,
+                  ),
+                  Text(blockType.name),
+                ],
+              ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }
