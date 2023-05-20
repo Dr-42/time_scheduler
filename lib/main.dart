@@ -38,6 +38,10 @@ class MyHomePage extends StatefulWidget {
   int currentBlockType = 0;
   bool pingedTimeBlocks = false;
   bool pingedcurrentBlockType = false;
+  String serverIP = "localhost:8080";
+  final ThemeData theme = ThemeData(
+    colorScheme: const ColorScheme.dark(),
+  );
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -50,19 +54,20 @@ class _MyHomePageState extends State<MyHomePage> {
   late Future<List<TimeBlock>> timeBlocksFuture;
   late String currentBlockName;
   late int currentBlockType;
+  late String serverIP;
 
   // Path: lib\main.dart
   @override
   Widget build(BuildContext context) {
     if (widget.blockTypes.isEmpty) {
-      var blockTypesFuture = fetchBlockTypes();
+      var blockTypesFuture = fetchBlockTypes(widget.serverIP);
       blockTypesFuture.then((value) => setState(() {
             widget.blockTypes = value;
           }));
     }
 
     if (widget.timeBlocks.isEmpty && !widget.pingedTimeBlocks) {
-      var timeBlocksFuture = fetchTimeBlocks();
+      var timeBlocksFuture = fetchTimeBlocks(widget.serverIP);
       timeBlocksFuture.then((value) => setState(() {
             widget.timeBlocks = value;
           }));
@@ -70,14 +75,14 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     if (widget.currentBlockName == "") {
-      var currentBlockNameFuture = fetchCurrentBlockName();
+      var currentBlockNameFuture = fetchCurrentBlockName(widget.serverIP);
       currentBlockNameFuture.then((value) => setState(() {
             widget.currentBlockName = value;
           }));
     }
 
     if (widget.currentBlockType == 0 && !widget.pingedcurrentBlockType) {
-      var currentBlockTypeFuture = fetchCurrentBlockType();
+      var currentBlockTypeFuture = fetchCurrentBlockType(widget.serverIP);
       currentBlockTypeFuture.then((value) => setState(() {
             widget.currentBlockType = value;
           }));
@@ -93,6 +98,79 @@ class _MyHomePageState extends State<MyHomePage> {
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.settings),
+            onPressed: () {
+              //Show a floating window with settings
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  var nameController = TextEditingController();
+
+                  return AlertDialog(
+                    title: const Text('Settings'),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          controller: nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Server IP',
+                          ),
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            widget.serverIP = nameController.text;
+
+                            var blockTypesFuture =
+                                fetchBlockTypes(widget.serverIP);
+                            blockTypesFuture.then((value) => setState(() {
+                                  widget.blockTypes = value;
+                                }));
+
+                            var timeBlocksFuture =
+                                fetchTimeBlocks(widget.serverIP);
+                            timeBlocksFuture.then((value) => setState(() {
+                                  widget.timeBlocks = value;
+                                }));
+
+                            var currentBlockNameFuture =
+                                fetchCurrentBlockName(widget.serverIP);
+                            currentBlockNameFuture.then((value) => setState(() {
+                                  widget.currentBlockName = value;
+                                }));
+
+                            var currentBlockTypeFuture =
+                                fetchCurrentBlockType(widget.serverIP);
+                            currentBlockTypeFuture.then((value) => setState(() {
+                                  widget.currentBlockType = value;
+                                }));
+
+                            widget.pingedTimeBlocks = false;
+                            widget.pingedcurrentBlockType = false;
+                          });
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Apply'),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
+        ],
       ),
       drawer: Drawer(
         child: Column(
@@ -213,7 +291,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 id: 0,
                               );
 
-                              postBlockType(blockType);
+                              postBlockType(blockType, widget.serverIP);
                               Navigator.pop(context);
                             },
                             child: const Text('Add'),
@@ -296,14 +374,20 @@ class _MyHomePageState extends State<MyHomePage> {
                                 endTime: endTime,
                               );
 
-                              postTimeBlock(newBlock);
-                              postCurrentBlockType(nextBlockType);
-                              postCurrentBlockName(nameController.text);
+                              postTimeBlock(newBlock, widget.serverIP);
+                              postCurrentBlockType(
+                                  nextBlockType, widget.serverIP);
+                              postCurrentBlockName(
+                                  nameController.text, widget.serverIP);
 
-                              timeBlocksFuture = fetchTimeBlocks();
-                              blockTypesFuture = fetchBlockTypes();
-                              var currentNameFuture = fetchCurrentBlockName();
-                              var currentTypeFuture = fetchCurrentBlockType();
+                              timeBlocksFuture =
+                                  fetchTimeBlocks(widget.serverIP);
+                              blockTypesFuture =
+                                  fetchBlockTypes(widget.serverIP);
+                              var currentNameFuture =
+                                  fetchCurrentBlockName(widget.serverIP);
+                              var currentTypeFuture =
+                                  fetchCurrentBlockType(widget.serverIP);
 
                               timeBlocksFuture.then((value) {
                                 setState(() {
@@ -353,8 +437,8 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void postBlockType(BlockType blockType) {
-    var url = Uri.parse('http://localhost:8080/blocktypes');
+  void postBlockType(BlockType blockType, String serverIP) {
+    var url = Uri.parse('http://$serverIP/blocktypes');
     var response = http.post(
       url,
       headers: <String, String>{
@@ -366,7 +450,7 @@ class _MyHomePageState extends State<MyHomePage> {
     response.then((value) {
       if (value.statusCode == 201) {
         setState(() {
-          var blockTypesFuture = fetchBlockTypes();
+          var blockTypesFuture = fetchBlockTypes(widget.serverIP);
           blockTypesFuture.then((value) => setState(() {
                 widget.blockTypes = value;
               }));
@@ -375,8 +459,8 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void postTimeBlock(TimeBlock timeBlock) {
-    var url = Uri.parse('http://localhost:8080/timeblocks');
+  void postTimeBlock(TimeBlock timeBlock, String serverIP) {
+    var url = Uri.parse('http://$serverIP/timeblocks');
     var response = http.post(
       url,
       headers: <String, String>{
@@ -388,7 +472,7 @@ class _MyHomePageState extends State<MyHomePage> {
     response.then((value) {
       if (value.statusCode == 201) {
         setState(() {
-          var timeBlocksFuture = fetchTimeBlocks();
+          var timeBlocksFuture = fetchTimeBlocks(widget.serverIP);
           timeBlocksFuture.then((value) => setState(() {
                 widget.timeBlocks = value;
               }));
@@ -397,8 +481,8 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void postCurrentBlockName(String name) {
-    var url = Uri.parse('http://localhost:8080/currentblockname');
+  void postCurrentBlockName(String name, String serverIP) {
+    var url = Uri.parse('http://$serverIP/currentblockname');
     var response = http.post(
       url,
       headers: <String, String>{
@@ -410,7 +494,7 @@ class _MyHomePageState extends State<MyHomePage> {
     response.then((value) {
       if (value.statusCode == 201) {
         setState(() {
-          var currentBlockNameFuture = fetchCurrentBlockName();
+          var currentBlockNameFuture = fetchCurrentBlockName(widget.serverIP);
           currentBlockNameFuture.then((value) => setState(() {
                 widget.currentBlockName = value;
               }));
@@ -419,8 +503,8 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void postCurrentBlockType(int t) {
-    var url = Uri.parse('http://localhost:8080/currentblocktype');
+  void postCurrentBlockType(int t, String serverIP) {
+    var url = Uri.parse('http://$serverIP/currentblocktype');
     var response = http.post(
       url,
       headers: <String, String>{
@@ -432,7 +516,7 @@ class _MyHomePageState extends State<MyHomePage> {
     response.then((value) {
       if (value.statusCode == 201) {
         setState(() {
-          var currentBlockTypeFuture = fetchCurrentBlockType();
+          var currentBlockTypeFuture = fetchCurrentBlockType(widget.serverIP);
           currentBlockTypeFuture.then((value) => setState(() {
                 widget.currentBlockType = value;
               }));

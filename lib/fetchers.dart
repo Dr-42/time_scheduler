@@ -3,13 +3,12 @@ import 'package:http/http.dart' as http;
 
 import 'data_types.dart';
 
-Future<List<BlockType>> fetchBlockTypes() async {
+Future<List<BlockType>> fetchBlockTypes(String serverIP) async {
   //Check if the server is running
   var serverRunning = false;
   while (!serverRunning) {
     try {
-      var response =
-          await http.get(Uri.parse('http://localhost:8080/blocktypes'));
+      var response = await http.get(Uri.parse('http://$serverIP/blocktypes'));
       if (response.statusCode == 200) {
         serverRunning = true;
       }
@@ -17,7 +16,12 @@ Future<List<BlockType>> fetchBlockTypes() async {
       serverRunning = false;
     }
   }
-  var response = await http.get(Uri.parse('http://localhost:8080/blocktypes'));
+  http.Response response;
+  try {
+    response = await http.get(Uri.parse('http://$serverIP/blocktypes'));
+  } catch (e) {
+    return [];
+  }
   if (response.statusCode == 200) {
     final List<Map<String, dynamic>> jsonList =
         List<Map<String, dynamic>>.from(json.decode(response.body));
@@ -27,12 +31,12 @@ Future<List<BlockType>> fetchBlockTypes() async {
   }
 }
 
-Future<List<TimeBlock>> fetchTimeBlocks() async {
+Future<List<TimeBlock>> fetchTimeBlocks(String serverIP) async {
   //Check if the server is running
   var query =
-      'http://localhost:8080/timeblocks?year=${DateTime.now().year}&month=${DateTime.now().month}&day=${DateTime.now().day}';
+      'http://$serverIP/timeblocks?year=${DateTime.now().year}&month=${DateTime.now().month}&day=${DateTime.now().day}';
   var queryPrev =
-      'http://localhost:8080/timeblocks?year=${DateTime.now().year}&month=${DateTime.now().month}&day=${DateTime.now().day - 1}';
+      'http://$serverIP/timeblocks?year=${DateTime.now().year}&month=${DateTime.now().month}&day=${DateTime.now().day - 1}';
   var serverRunning = false;
   while (!serverRunning) {
     try {
@@ -55,8 +59,8 @@ Future<List<TimeBlock>> fetchTimeBlocks() async {
             jsonList.map((json) => TimeBlock.fromJson(json)).toList();
 
         var prevBlock = prevList.last;
-        var prevTitleFuture = fetchCurrentBlockName();
-        var prevTypeFuture = fetchCurrentBlockType();
+        var prevTitleFuture = fetchCurrentBlockName(serverIP);
+        var prevTypeFuture = fetchCurrentBlockType(serverIP);
 
         var prevTitle = await prevTitleFuture;
         var prevType = await prevTypeFuture;
@@ -71,7 +75,7 @@ Future<List<TimeBlock>> fetchTimeBlocks() async {
         );
         if (prevLastBlock.title != "") {
           //Add the last block of yesterday
-          query = 'http://localhost:8080/timeblocks';
+          query = 'http://$serverIP/timeblocks';
           var serverAccepted = false;
           while (!serverAccepted) {
             try {
@@ -99,7 +103,7 @@ Future<List<TimeBlock>> fetchTimeBlocks() async {
               type: 0,
             );
 
-            query = 'http://localhost:8080/timeblocks';
+            query = 'http://$serverIP/timeblocks';
             var serverRunning = false;
             while (!serverRunning) {
               try {
@@ -135,8 +139,8 @@ Future<List<TimeBlock>> fetchTimeBlocks() async {
   }
 }
 
-Future<String> fetchCurrentBlockName() async {
-  var query = 'http://localhost:8080/currentblockname';
+Future<String> fetchCurrentBlockName(String serverIP) async {
+  var query = 'http://$serverIP/currentblockname';
   var serverRunning = false;
   while (!serverRunning) {
     try {
@@ -157,8 +161,8 @@ Future<String> fetchCurrentBlockName() async {
   }
 }
 
-Future<int> fetchCurrentBlockType() async {
-  var query = 'http://localhost:8080/currentblocktype';
+Future<int> fetchCurrentBlockType(String serverIP) async {
+  var query = 'http://$serverIP/currentblocktype';
   var serverRunning = false;
   while (!serverRunning) {
     try {
