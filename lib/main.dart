@@ -125,67 +125,11 @@ class MyHomePage extends StatefulWidget {
 
   final String title;
   List<BlockType> blockTypes = [];
+  List<TimeBlock> timeBlocks = [];
   String currentBlockName = "";
   int currentBlockType = 0;
-  bool pinged = false;
-
-  /*final List<BlockType> blockTypes = [
-    BlockType(
-      name: "Sleep",
-      color: Color.fromARGB(255, 102, 58, 5),
-      id: 0,
-    ),
-    BlockType(
-      name: "Work",
-      color: Colors.purple[800]!,
-      id: 1,
-    ),
-    BlockType(
-      name: "Play",
-      color: Colors.amber[800]!,
-      id: 2,
-    ),
-  ];*/
-
-  // A list of time blocks
-  // User can add new time blocks
-  // User cannot delete time blocks
-  /*final List<TimeBlock> timeBlocks = [
-    TimeBlock(
-        //Today 6 AM
-        startTime: DateTime.now().subtract(Duration(hours: 24)),
-        endTime: DateTime.now().subtract(Duration(hours: 16)),
-        title: "Sleep",
-        type: 0),
-    TimeBlock(
-        startTime: DateTime.now().subtract(Duration(hours: 16)),
-        endTime: DateTime.now().subtract(Duration(hours: 8)),
-        title: "Work",
-        type: 0),
-    TimeBlock(
-        startTime: DateTime.now().subtract(Duration(hours: 8)),
-        endTime: DateTime.now().subtract(Duration(hours: 6)),
-        title: "Play",
-        type: 0),
-    TimeBlock(
-      startTime: DateTime.now().subtract(Duration(hours: 6)),
-      endTime: DateTime.now().subtract(Duration(hours: 4)),
-      title: "Evening Sleep",
-      type: 0,
-    ),
-    TimeBlock(
-      startTime: DateTime.now().subtract(Duration(hours: 4)),
-      endTime: DateTime.now().subtract(Duration(hours: 1)),
-      title: "Evening Work",
-      type: 0,
-    ),
-    TimeBlock(
-        startTime: DateTime.now().subtract(Duration(hours: 1)),
-        endTime: DateTime.now(),
-        title: "Evening Play",
-        type: 0),
-  ];*/
-  List<TimeBlock> timeBlocks = [];
+  bool pingedTimeBlocks = false;
+  bool pingedcurrentBlockType = false;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -209,12 +153,12 @@ class _MyHomePageState extends State<MyHomePage> {
           }));
     }
 
-    if (widget.timeBlocks.isEmpty && !widget.pinged) {
+    if (widget.timeBlocks.isEmpty && !widget.pingedTimeBlocks) {
       var timeBlocksFuture = fetchTimeBlocks();
       timeBlocksFuture.then((value) => setState(() {
             widget.timeBlocks = value;
           }));
-      widget.pinged = true;
+      widget.pingedTimeBlocks = true;
     }
 
     if (widget.currentBlockName == "") {
@@ -222,6 +166,14 @@ class _MyHomePageState extends State<MyHomePage> {
       currentBlockNameFuture.then((value) => setState(() {
             widget.currentBlockName = value;
           }));
+    }
+
+    if (widget.currentBlockType == 0 && !widget.pingedcurrentBlockType) {
+      var currentBlockTypeFuture = fetchCurrentBlockType();
+      currentBlockTypeFuture.then((value) => setState(() {
+            widget.currentBlockType = value;
+          }));
+      widget.pingedcurrentBlockType = true;
     }
 
     return Scaffold(
@@ -289,6 +241,8 @@ class _MyHomePageState extends State<MyHomePage> {
           ? HomePage(
               timeBlocks: widget.timeBlocks,
               blockTypes: widget.blockTypes,
+              currentBlockName: widget.currentBlockName,
+              currentBlockType: widget.currentBlockType,
             )
           : selectedIndex == 0 && widget.timeBlocks.isEmpty
               ? const Center(

@@ -5,11 +5,15 @@ import 'package:flutter/material.dart';
 class HomePage extends StatelessWidget {
   final List<BlockType> blockTypes;
   final List<TimeBlock> timeBlocks;
+  final String currentBlockName;
+  final int currentBlockType;
 
   const HomePage({
     Key? key,
     required this.blockTypes,
     required this.timeBlocks,
+    required this.currentBlockName,
+    required this.currentBlockType,
   }) : super(key: key);
 
   // A list of block types
@@ -35,12 +39,11 @@ class HomePage extends StatelessWidget {
         ),
         CenterTimer(
           startTime: curTime,
-          blockType: blockTypes[timeBlocks[timeBlocks.length - 1].type],
+          blockType: blockTypes[currentBlockType],
         ),
         Card(
           child: Text(
-              style: TextStyle(fontSize: 24),
-              "Currently in ${blockTypes[timeBlocks[timeBlocks.length - 1].type].name}"),
+              style: TextStyle(fontSize: 24), "Currently in $currentBlockName"),
         ),
         Divider(),
         Text(
