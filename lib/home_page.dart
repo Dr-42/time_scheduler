@@ -104,11 +104,12 @@ class TimeBlockCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var cardFormattedTime =
+        "${block.startTime.hour.toString().padLeft(2, '0')}:${block.startTime.minute.toString().padLeft(2, '0')} - ${block.endTime.hour.toString().padLeft(2, '0')}:${block.endTime.minute.toString().padLeft(2, '0')}";
     return Card(
       child: ListTile(
         title: Text(block.title),
-        subtitle: Text(
-            "${block.startTime.hour}:${block.startTime.minute} - ${block.endTime.hour}:${block.endTime.minute}"),
+        subtitle: Text(cardFormattedTime),
         tileColor: blockTypes[block.type].color,
       ),
     );
@@ -151,7 +152,7 @@ class _CenterTimerState extends State<CenterTimer> {
   Widget build(BuildContext context) {
     var elapsedTime = currentTime.difference(widget.timeBlocks.last.endTime);
     String formattedTime =
-        "${elapsedTime.inHours.toString().padLeft(2, '0')}:${elapsedTime.inMinutes.remainder(60).toString().padLeft(2, '0')}:${elapsedTime.inSeconds.remainder(60).toString().padLeft(2, '0')}";
+        "${elapsedTime.inHours.toString().padLeft(2, '0')}:${elapsedTime.inMinutes.remainder(60).toString().padLeft(2, '0')}:${elapsedTime.inSeconds.remainder(60).toString().padLeft(2, '0').padRight(2, '0')}";
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -391,7 +392,7 @@ class TimeBlock {
         json['endTime']['minute'],
         json['endTime']['second'],
       ),
-      title: json['title'],
+      title: json['title'].toString().replaceAll("\"", ""),
       type: json['blockTypeId'],
     );
   }
