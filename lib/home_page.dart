@@ -75,6 +75,7 @@ class HomePage extends StatelessWidget {
         Expanded(
           child: ListView.builder(
             itemCount: timeBlocks.length,
+            reverse: true,
             itemBuilder: (context, index) {
               return TimeBlockCard(
                 block: timeBlocks[index],
