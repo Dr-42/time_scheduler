@@ -32,13 +32,6 @@ class MyHomePage extends StatefulWidget {
   MyHomePage({Key? key, required this.title}) : super(key: key);
 
   final String title;
-  List<BlockType> blockTypes = [];
-  List<TimeBlock> timeBlocks = [];
-  String currentBlockName = "";
-  int currentBlockType = 0;
-  bool pingedTimeBlocks = false;
-  bool pingedcurrentBlockType = false;
-  String serverIP = "localhost:8080";
   final ThemeData theme = ThemeData(
     colorScheme: const ColorScheme.dark(),
   );
@@ -52,41 +45,46 @@ class _MyHomePageState extends State<MyHomePage> {
 
   late Future<List<BlockType>> blockTypesFuture;
   late Future<List<TimeBlock>> timeBlocksFuture;
-  late String currentBlockName;
-  late int currentBlockType;
-  late String serverIP;
+  late String currentBlockName = "";
+  late int currentBlockType = 0;
+  String serverIP = "192.168.1.36:8080";
+
+  late List<BlockType> blockTypes = [];
+  late List<TimeBlock> timeBlocks = [];
+  late bool pingedTimeBlocks = false;
+  late bool pingedcurrentBlockType = false;
 
   // Path: lib\main.dart
   @override
   Widget build(BuildContext context) {
-    if (widget.blockTypes.isEmpty) {
-      var blockTypesFuture = fetchBlockTypes(widget.serverIP);
+    if (blockTypes.isEmpty) {
+      var blockTypesFuture = fetchBlockTypes(serverIP);
       blockTypesFuture.then((value) => setState(() {
-            widget.blockTypes = value;
+            blockTypes = value;
           }));
     }
 
-    if (widget.timeBlocks.isEmpty && !widget.pingedTimeBlocks) {
-      var timeBlocksFuture = fetchTimeBlocks(widget.serverIP);
+    if (timeBlocks.isEmpty && !pingedTimeBlocks) {
+      var timeBlocksFuture = fetchTimeBlocks(serverIP);
       timeBlocksFuture.then((value) => setState(() {
-            widget.timeBlocks = value;
+            timeBlocks = value;
           }));
-      widget.pingedTimeBlocks = true;
+      pingedTimeBlocks = true;
     }
 
-    if (widget.currentBlockName == "") {
-      var currentBlockNameFuture = fetchCurrentBlockName(widget.serverIP);
+    if (currentBlockName == "") {
+      var currentBlockNameFuture = fetchCurrentBlockName(serverIP);
       currentBlockNameFuture.then((value) => setState(() {
-            widget.currentBlockName = value;
+            currentBlockName = value;
           }));
     }
 
-    if (widget.currentBlockType == 0 && !widget.pingedcurrentBlockType) {
-      var currentBlockTypeFuture = fetchCurrentBlockType(widget.serverIP);
+    if (currentBlockType == 0 && !pingedcurrentBlockType) {
+      var currentBlockTypeFuture = fetchCurrentBlockType(serverIP);
       currentBlockTypeFuture.then((value) => setState(() {
-            widget.currentBlockType = value;
+            currentBlockType = value;
           }));
-      widget.pingedcurrentBlockType = true;
+      pingedcurrentBlockType = true;
     }
 
     return Scaffold(
@@ -131,34 +129,32 @@ class _MyHomePageState extends State<MyHomePage> {
                       TextButton(
                         onPressed: () {
                           setState(() {
-                            widget.serverIP = nameController.text;
+                            serverIP = nameController.text;
 
-                            var blockTypesFuture =
-                                fetchBlockTypes(widget.serverIP);
+                            var blockTypesFuture = fetchBlockTypes(serverIP);
                             blockTypesFuture.then((value) => setState(() {
-                                  widget.blockTypes = value;
+                                  blockTypes = value;
                                 }));
 
-                            var timeBlocksFuture =
-                                fetchTimeBlocks(widget.serverIP);
+                            var timeBlocksFuture = fetchTimeBlocks(serverIP);
                             timeBlocksFuture.then((value) => setState(() {
-                                  widget.timeBlocks = value;
+                                  timeBlocks = value;
                                 }));
 
                             var currentBlockNameFuture =
-                                fetchCurrentBlockName(widget.serverIP);
+                                fetchCurrentBlockName(serverIP);
                             currentBlockNameFuture.then((value) => setState(() {
-                                  widget.currentBlockName = value;
+                                  currentBlockName = value;
                                 }));
 
                             var currentBlockTypeFuture =
-                                fetchCurrentBlockType(widget.serverIP);
+                                fetchCurrentBlockType(serverIP);
                             currentBlockTypeFuture.then((value) => setState(() {
-                                  widget.currentBlockType = value;
+                                  currentBlockType = value;
                                 }));
 
-                            widget.pingedTimeBlocks = false;
-                            widget.pingedcurrentBlockType = false;
+                            pingedTimeBlocks = false;
+                            pingedcurrentBlockType = false;
                           });
                           Navigator.pop(context);
                         },
@@ -223,15 +219,14 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-      body: selectedIndex == 0 && widget.timeBlocks.isNotEmpty
+      body: selectedIndex == 0 && timeBlocks.isNotEmpty
           ? HomePage(
-              timeBlocks: widget.timeBlocks,
-              blockTypes: widget.blockTypes,
-              currentBlockName:
-                  widget.currentBlockName.replaceAll("\"", "").trim(),
-              currentBlockType: widget.currentBlockType,
+              timeBlocks: timeBlocks,
+              blockTypes: blockTypes,
+              currentBlockName: currentBlockName.replaceAll("\"", "").trim(),
+              currentBlockType: currentBlockType,
             )
-          : selectedIndex == 0 && widget.timeBlocks.isEmpty
+          : selectedIndex == 0 && timeBlocks.isEmpty
               ? const Center(
                   child: Text("Please add a time block"),
                 )
@@ -291,7 +286,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 id: 0,
                               );
 
-                              postBlockType(blockType, widget.serverIP);
+                              postBlockType(blockType, serverIP);
                               Navigator.pop(context);
                             },
                             child: const Text('Add'),
@@ -330,7 +325,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 labelText: 'Task Type',
                               ),
                               items: [
-                                for (var blockType in widget.blockTypes)
+                                for (var blockType in blockTypes)
                                   DropdownMenuItem(
                                     value: blockType,
                                     child: Row(
@@ -360,12 +355,12 @@ class _MyHomePageState extends State<MyHomePage> {
                           ),
                           TextButton(
                             onPressed: () {
-                              if (widget.timeBlocks.isNotEmpty) {
-                                startTime = widget.timeBlocks.last.endTime;
+                              if (timeBlocks.isNotEmpty) {
+                                startTime = timeBlocks.last.endTime;
                               }
                               var endTime = DateTime.now();
-                              var blockName = widget.currentBlockName;
-                              var blockType = widget.currentBlockType;
+                              var blockName = currentBlockName;
+                              var blockType = currentBlockType;
 
                               var newBlock = TimeBlock(
                                 title: blockName,
@@ -374,42 +369,39 @@ class _MyHomePageState extends State<MyHomePage> {
                                 endTime: endTime,
                               );
 
-                              postTimeBlock(newBlock, widget.serverIP);
-                              postCurrentBlockType(
-                                  nextBlockType, widget.serverIP);
+                              postTimeBlock(newBlock, serverIP);
+                              postCurrentBlockType(nextBlockType, serverIP);
                               postCurrentBlockName(
-                                  nameController.text, widget.serverIP);
+                                  nameController.text, serverIP);
 
-                              timeBlocksFuture =
-                                  fetchTimeBlocks(widget.serverIP);
-                              blockTypesFuture =
-                                  fetchBlockTypes(widget.serverIP);
+                              timeBlocksFuture = fetchTimeBlocks(serverIP);
+                              blockTypesFuture = fetchBlockTypes(serverIP);
                               var currentNameFuture =
-                                  fetchCurrentBlockName(widget.serverIP);
+                                  fetchCurrentBlockName(serverIP);
                               var currentTypeFuture =
-                                  fetchCurrentBlockType(widget.serverIP);
+                                  fetchCurrentBlockType(serverIP);
 
                               timeBlocksFuture.then((value) {
                                 setState(() {
-                                  widget.timeBlocks = value;
+                                  timeBlocks = value;
                                 });
                               });
 
                               blockTypesFuture.then((value) {
                                 setState(() {
-                                  widget.blockTypes = value;
+                                  blockTypes = value;
                                 });
                               });
 
                               currentNameFuture.then((value) {
                                 setState(() {
-                                  widget.currentBlockName = value;
+                                  currentBlockName = value;
                                 });
                               });
 
                               currentTypeFuture.then((value) {
                                 setState(() {
-                                  widget.currentBlockType = value;
+                                  currentBlockType = value;
                                 });
                               });
 
@@ -450,9 +442,9 @@ class _MyHomePageState extends State<MyHomePage> {
     response.then((value) {
       if (value.statusCode == 201) {
         setState(() {
-          var blockTypesFuture = fetchBlockTypes(widget.serverIP);
+          var blockTypesFuture = fetchBlockTypes(serverIP);
           blockTypesFuture.then((value) => setState(() {
-                widget.blockTypes = value;
+                blockTypes = value;
               }));
         });
       }
@@ -472,9 +464,9 @@ class _MyHomePageState extends State<MyHomePage> {
     response.then((value) {
       if (value.statusCode == 201) {
         setState(() {
-          var timeBlocksFuture = fetchTimeBlocks(widget.serverIP);
+          var timeBlocksFuture = fetchTimeBlocks(serverIP);
           timeBlocksFuture.then((value) => setState(() {
-                widget.timeBlocks = value;
+                timeBlocks = value;
               }));
         });
       }
@@ -494,9 +486,9 @@ class _MyHomePageState extends State<MyHomePage> {
     response.then((value) {
       if (value.statusCode == 201) {
         setState(() {
-          var currentBlockNameFuture = fetchCurrentBlockName(widget.serverIP);
+          var currentBlockNameFuture = fetchCurrentBlockName(serverIP);
           currentBlockNameFuture.then((value) => setState(() {
-                widget.currentBlockName = value;
+                currentBlockName = value;
               }));
         });
       }
@@ -516,9 +508,9 @@ class _MyHomePageState extends State<MyHomePage> {
     response.then((value) {
       if (value.statusCode == 201) {
         setState(() {
-          var currentBlockTypeFuture = fetchCurrentBlockType(widget.serverIP);
+          var currentBlockTypeFuture = fetchCurrentBlockType(serverIP);
           currentBlockTypeFuture.then((value) => setState(() {
-                widget.currentBlockType = value;
+                currentBlockType = value;
               }));
         });
       }
