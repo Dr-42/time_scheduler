@@ -26,18 +26,16 @@ class HomePage extends StatelessWidget {
     var curTime = DateTime(2023, 5, 12, 16, 9, 0);
 
     if (blockTypes.isEmpty) {
-      return Center(
+      return const Center(
         child: Text("No block types"),
       );
     }
 
     return Column(
       children: [
-        Container(
-          child: Text(
-            "Welcome Spandan!",
-            style: Theme.of(context).textTheme.displaySmall,
-          ),
+        Text(
+          "Welcome Spandan!",
+          style: Theme.of(context).textTheme.displaySmall,
         ),
         CenterTimer(
           startTime: curTime,
@@ -46,10 +44,11 @@ class HomePage extends StatelessWidget {
         ),
         Card(
           child: Text(
-              style: TextStyle(fontSize: 24), "Currently in $currentBlockName"),
+              style: const TextStyle(fontSize: 24),
+              "Currently in $currentBlockName"),
         ),
-        Divider(),
-        Text(
+        const Divider(),
+        const Text(
           "Today's Distribution",
           style: TextStyle(fontSize: 16),
         ),
@@ -66,8 +65,8 @@ class HomePage extends StatelessWidget {
             ),
           ],
         ),
-        Divider(),
-        Text(
+        const Divider(),
+        const Text(
           "Until now",
           style: TextStyle(fontSize: 16),
         ),
@@ -93,7 +92,7 @@ class TimeBlockCard extends StatelessWidget {
   final TimeBlock block;
   final List<BlockType> blockTypes;
 
-  TimeBlockCard({
+  const TimeBlockCard({
     Key? key,
     required this.block,
     required this.blockTypes,
@@ -132,7 +131,7 @@ class CenterTimer extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _CenterTimerState createState() => _CenterTimerState();
+  State<CenterTimer> createState() => _CenterTimerState();
 }
 
 class _CenterTimerState extends State<CenterTimer> {
@@ -144,9 +143,9 @@ class _CenterTimerState extends State<CenterTimer> {
     super.initState();
     // Set the current time to the start time
     currentTime = DateTime.now();
-    timer = Timer.periodic(Duration(seconds: 1), (timer) {
+    timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
-        currentTime = currentTime.add(Duration(seconds: 1));
+        currentTime = currentTime.add(const Duration(seconds: 1));
       });
     });
   }
@@ -167,7 +166,7 @@ class _CenterTimerState extends State<CenterTimer> {
             child: Text(
               // Format the elapsed time to HH:MM:SS
               formattedTime,
-              style: TextStyle(fontSize: 50),
+              style: const TextStyle(fontSize: 50),
             ),
           ),
         ),
@@ -184,10 +183,10 @@ class _CenterTimerState extends State<CenterTimer> {
 
 class PieChartLegend extends StatefulWidget {
   final List<BlockType> blockTypes;
-  PieChartLegend({Key? key, required this.blockTypes}) : super(key: key);
+  const PieChartLegend({Key? key, required this.blockTypes}) : super(key: key);
 
   @override
-  _PieChartLegendState createState() => _PieChartLegendState();
+  State<PieChartLegend> createState() => _PieChartLegendState();
 }
 
 class _PieChartLegendState extends State<PieChartLegend> {
@@ -209,7 +208,7 @@ class _PieChartLegendState extends State<PieChartLegend> {
                     height: 10,
                     color: blockType.color,
                   ),
-                  SizedBox(
+                  const SizedBox(
                     width: 5,
                   ),
                   Text(blockType.name),
@@ -224,7 +223,7 @@ class _PieChartLegendState extends State<PieChartLegend> {
 
 // A 360 degree Piechart with total length of 24 hours
 class PieChart extends StatefulWidget {
-  PieChart({
+  const PieChart({
     Key? key,
     required this.blockTypes,
     required this.timeBlocks,
@@ -246,7 +245,7 @@ class _PieChartState extends State<PieChart> {
   void initState() {
     super.initState();
     // Start the timer to update the chart every second
-    timer = Timer.periodic(Duration(seconds: 1), (_) {
+    timer = Timer.periodic(const Duration(seconds: 1), (_) {
       setState(() {}); // Trigger a rebuild of the widget
     });
   }
@@ -273,13 +272,13 @@ class _PieChartState extends State<PieChart> {
         ),
     ];
 
-    var cur_data = Tuple(
+    var curData = Tuple(
       widget.blockTypes[widget.curBlockType],
       DateTime.now().difference(widget.timeBlocks.last.endTime).inSeconds,
     );
 
-    data.add(cur_data);
-    total += cur_data.item2;
+    data.add(curData);
+    total += curData.item2;
 
     return Padding(
       padding: const EdgeInsets.all(28.0),
@@ -326,6 +325,7 @@ class PieChartPainter extends CustomPainter {
     }
   }
 
+  @override
   bool shouldRepaint(covariant PieChartPainter oldDelegate) {
     return oldDelegate.data != data;
   }

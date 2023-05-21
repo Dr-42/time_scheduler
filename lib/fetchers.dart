@@ -7,6 +7,9 @@ Future<List<BlockType>> fetchBlockTypes(String serverIP) async {
   //Check if the server is running
   var serverRunning = false;
   while (!serverRunning) {
+    if (serverIP == "") {
+      return [];
+    }
     try {
       var response = await http.get(Uri.parse('http://$serverIP/blocktypes'));
       if (response.statusCode == 200) {
@@ -39,6 +42,9 @@ Future<List<TimeBlock>> fetchTimeBlocks(String serverIP) async {
       'http://$serverIP/timeblocks?year=${DateTime.now().year}&month=${DateTime.now().month}&day=${DateTime.now().day - 1}';
   var serverRunning = false;
   while (!serverRunning) {
+    if (serverIP == "") {
+      return [];
+    }
     try {
       var response = await http.get(Uri.parse(query));
       if (response.statusCode == 200) {
@@ -143,6 +149,9 @@ Future<String> fetchCurrentBlockName(String serverIP) async {
   var query = 'http://$serverIP/currentblockname';
   var serverRunning = false;
   while (!serverRunning) {
+    if (serverIP == "") {
+      return "";
+    }
     try {
       var response = await http.get(Uri.parse(query));
       if (response.statusCode == 200) {
@@ -165,6 +174,9 @@ Future<int> fetchCurrentBlockType(String serverIP) async {
   var query = 'http://$serverIP/currentblocktype';
   var serverRunning = false;
   while (!serverRunning) {
+    if (serverIP == "") {
+      return 0;
+    }
     try {
       var response = await http.get(Uri.parse(query));
       if (response.statusCode == 200) {

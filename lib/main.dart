@@ -2,11 +2,23 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'home_page.dart';
 import 'settings_page.dart';
 import 'data_types.dart';
 import 'fetchers.dart';
+
+Future<String> getServerIP() async {
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  return prefs.getString('serverIP') ?? "";
+}
+
+Future<void> setServerIP(String serverIP) async {
+  //Save the server IP to shared preferences
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  prefs.setString('serverIP', serverIP);
+}
 
 void main() {
   runApp(const MyApp());
@@ -42,51 +54,138 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   var selectedIndex = 0;
-
-  late Future<List<BlockType>> blockTypesFuture;
-  late Future<List<TimeBlock>> timeBlocksFuture;
-  late String currentBlockName = "";
-  late int currentBlockType = 0;
-  String serverIP = "192.168.1.36:8080";
+  var noServer = true;
 
   late List<BlockType> blockTypes = [];
   late List<TimeBlock> timeBlocks = [];
-  late bool pingedTimeBlocks = false;
-  late bool pingedcurrentBlockType = false;
+  late String currentBlockName = "";
+  late int currentBlockType = 0;
+  late String serverIP = "";
 
-  // Path: lib\main.dart
+  @override
+  void initState() {
+    super.initState();
+    var serverIPFuture = getServerIP();
+    serverIPFuture.then((value) => setState(() {
+          serverIP = value;
+        }));
+
+    if (serverIP == "") {
+      setState(() {
+        noServer = true;
+      });
+    } else {
+      setState(() {
+        noServer = false;
+      });
+    }
+
+    var blockTypesFuture = fetchBlockTypes(serverIP);
+    blockTypesFuture.then((value) => setState(() {
+          blockTypes = value;
+        }));
+
+    var timeBlocksFuture = fetchTimeBlocks(serverIP);
+    timeBlocksFuture.then((value) => setState(() {
+          timeBlocks = value;
+        }));
+
+    var currentBlockNameFuture = fetchCurrentBlockName(serverIP);
+    currentBlockNameFuture.then((value) => setState(() {
+          currentBlockName = value;
+        }));
+
+    var currentBlockTypeFuture = fetchCurrentBlockType(serverIP);
+    currentBlockTypeFuture.then((value) => setState(() {
+          currentBlockType = value;
+        }));
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (blockTypes.isEmpty) {
-      var blockTypesFuture = fetchBlockTypes(serverIP);
-      blockTypesFuture.then((value) => setState(() {
-            blockTypes = value;
+    if (noServer) {
+      var serverIPFuture = getServerIP();
+      serverIPFuture.then((value) => setState(() {
+            serverIP = value;
           }));
-    }
+      if (serverIP != "") {
+        setState(() {
+          noServer = false;
 
-    if (timeBlocks.isEmpty && !pingedTimeBlocks) {
-      var timeBlocksFuture = fetchTimeBlocks(serverIP);
-      timeBlocksFuture.then((value) => setState(() {
-            timeBlocks = value;
-          }));
-      pingedTimeBlocks = true;
-    }
+          var blockTypesFuture = fetchBlockTypes(serverIP);
+          blockTypesFuture.then((value) => setState(() {
+                blockTypes = value;
+              }));
 
-    if (currentBlockName == "") {
-      var currentBlockNameFuture = fetchCurrentBlockName(serverIP);
-      currentBlockNameFuture.then((value) => setState(() {
-            currentBlockName = value;
-          }));
-    }
+          var timeBlocksFuture = fetchTimeBlocks(serverIP);
+          timeBlocksFuture.then((value) => setState(() {
+                timeBlocks = value;
+              }));
 
-    if (currentBlockType == 0 && !pingedcurrentBlockType) {
-      var currentBlockTypeFuture = fetchCurrentBlockType(serverIP);
-      currentBlockTypeFuture.then((value) => setState(() {
-            currentBlockType = value;
-          }));
-      pingedcurrentBlockType = true;
-    }
+          var currentBlockNameFuture = fetchCurrentBlockName(serverIP);
+          currentBlockNameFuture.then((value) => setState(() {
+                currentBlockName = value;
+              }));
 
+          var currentBlockTypeFuture = fetchCurrentBlockType(serverIP);
+          currentBlockTypeFuture.then((value) => setState(() {
+                currentBlockType = value;
+              }));
+        });
+      }
+      return Scaffold(
+        //Text showing no serverIP is set
+        //Text field to set serverIP
+        //Button to set serverIP
+
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text("No server IP set"),
+              TextField(
+                decoration: const InputDecoration(
+                  labelText: 'Server IP',
+                ),
+                onChanged: (text) {
+                  serverIP = text;
+                },
+              ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    setServerIP(serverIP);
+                    noServer = false;
+                    var blockTypesFuture = fetchBlockTypes(serverIP);
+                    blockTypesFuture.then((value) => setState(() {
+                          blockTypes = value;
+                        }));
+
+                    var timeBlocksFuture = fetchTimeBlocks(serverIP);
+                    timeBlocksFuture.then((value) => setState(() {
+                          timeBlocks = value;
+                        }));
+
+                    var currentBlockNameFuture =
+                        fetchCurrentBlockName(serverIP);
+                    currentBlockNameFuture.then((value) => setState(() {
+                          currentBlockName = value;
+                        }));
+
+                    var currentBlockTypeFuture =
+                        fetchCurrentBlockType(serverIP);
+                    currentBlockTypeFuture.then((value) => setState(() {
+                          currentBlockType = value;
+                        }));
+                  });
+                },
+                child: const Text("Set Server IP"),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -98,7 +197,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.settings),
+            icon: const Icon(Icons.settings),
             onPressed: () {
               //Show a floating window with settings
               showDialog(
@@ -130,6 +229,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         onPressed: () {
                           setState(() {
                             serverIP = nameController.text;
+                            setServerIP(serverIP);
 
                             var blockTypesFuture = fetchBlockTypes(serverIP);
                             blockTypesFuture.then((value) => setState(() {
@@ -152,9 +252,6 @@ class _MyHomePageState extends State<MyHomePage> {
                             currentBlockTypeFuture.then((value) => setState(() {
                                   currentBlockType = value;
                                 }));
-
-                            pingedTimeBlocks = false;
-                            pingedcurrentBlockType = false;
                           });
                           Navigator.pop(context);
                         },
@@ -260,7 +357,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 labelText: 'Block Type Name',
                               ),
                             ),
-                            Text("Block Color"),
+                            const Text("Block Color"),
                             ColorPicker(
                               onColorChanged: (color) {
                                 col = color;
@@ -374,8 +471,8 @@ class _MyHomePageState extends State<MyHomePage> {
                               postCurrentBlockName(
                                   nameController.text, serverIP);
 
-                              timeBlocksFuture = fetchTimeBlocks(serverIP);
-                              blockTypesFuture = fetchBlockTypes(serverIP);
+                              var timeBlocksFuture = fetchTimeBlocks(serverIP);
+                              var blockTypesFuture = fetchBlockTypes(serverIP);
                               var currentNameFuture =
                                   fetchCurrentBlockName(serverIP);
                               var currentTypeFuture =
