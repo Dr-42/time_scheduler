@@ -1,7 +1,92 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'data_types.dart';
+
+Future<String> getServerIP() async {
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  return prefs.getString('serverIP') ?? "";
+}
+
+Future<void> setServerIP(String serverIP) async {
+  //Save the server IP to shared preferences
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  prefs.setString('serverIP', serverIP);
+}
+
+bool postBlockType(BlockType blockType, String serverIP) {
+  var url = Uri.parse('http://$serverIP/blocktypes');
+  var response = http.post(
+    url,
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    },
+    body: jsonEncode(blockType.toJson()),
+  );
+
+  response.then((value) {
+    if (value.statusCode == 201) {
+      return true;
+    }
+  });
+
+  return false;
+}
+
+bool postTimeBlock(TimeBlock timeBlock, String serverIP) {
+  var url = Uri.parse('http://$serverIP/timeblocks');
+  var response = http.post(
+    url,
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    },
+    body: jsonEncode(timeBlock.toJson()),
+  );
+
+  response.then((value) {
+    if (value.statusCode == 201) {
+      return true;
+    }
+  });
+  return false;
+}
+
+bool postCurrentBlockName(String name, String serverIP) {
+  var url = Uri.parse('http://$serverIP/currentblockname');
+  var response = http.post(
+    url,
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    },
+    body: jsonEncode(name),
+  );
+
+  response.then((value) {
+    if (value.statusCode == 201) {
+      return true;
+    }
+  });
+  return false;
+}
+
+bool postCurrentBlockType(int t, String serverIP) {
+  var url = Uri.parse('http://$serverIP/currentblocktype');
+  var response = http.post(
+    url,
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    },
+    body: jsonEncode(t),
+  );
+
+  response.then((value) {
+    if (value.statusCode == 201) {
+      return false;
+    }
+  });
+  return true;
+}
 
 Future<List<BlockType>> fetchBlockTypes(String serverIP) async {
   //Check if the server is running

@@ -1,24 +1,10 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'home_page.dart';
 import 'settings_page.dart';
 import 'data_types.dart';
-import 'fetchers.dart';
-
-Future<String> getServerIP() async {
-  final SharedPreferences prefs = await SharedPreferences.getInstance();
-  return prefs.getString('serverIP') ?? "";
-}
-
-Future<void> setServerIP(String serverIP) async {
-  //Save the server IP to shared preferences
-  final SharedPreferences prefs = await SharedPreferences.getInstance();
-  prefs.setString('serverIP', serverIP);
-}
+import 'server_io.dart';
 
 void main() {
   runApp(const MyApp());
@@ -27,7 +13,6 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -61,6 +46,7 @@ class _MyHomePageState extends State<MyHomePage> {
   late String currentBlockName = "";
   late int currentBlockType = 0;
   late String serverIP = "";
+  TextEditingController serverIPController = TextEditingController();
 
   @override
   void initState() {
@@ -79,26 +65,7 @@ class _MyHomePageState extends State<MyHomePage> {
         noServer = false;
       });
     }
-
-    var blockTypesFuture = fetchBlockTypes(serverIP);
-    blockTypesFuture.then((value) => setState(() {
-          blockTypes = value;
-        }));
-
-    var timeBlocksFuture = fetchTimeBlocks(serverIP);
-    timeBlocksFuture.then((value) => setState(() {
-          timeBlocks = value;
-        }));
-
-    var currentBlockNameFuture = fetchCurrentBlockName(serverIP);
-    currentBlockNameFuture.then((value) => setState(() {
-          currentBlockName = value;
-        }));
-
-    var currentBlockTypeFuture = fetchCurrentBlockType(serverIP);
-    currentBlockTypeFuture.then((value) => setState(() {
-          currentBlockType = value;
-        }));
+    syncServer();
   }
 
   @override
@@ -111,26 +78,7 @@ class _MyHomePageState extends State<MyHomePage> {
       if (serverIP != "") {
         setState(() {
           noServer = false;
-
-          var blockTypesFuture = fetchBlockTypes(serverIP);
-          blockTypesFuture.then((value) => setState(() {
-                blockTypes = value;
-              }));
-
-          var timeBlocksFuture = fetchTimeBlocks(serverIP);
-          timeBlocksFuture.then((value) => setState(() {
-                timeBlocks = value;
-              }));
-
-          var currentBlockNameFuture = fetchCurrentBlockName(serverIP);
-          currentBlockNameFuture.then((value) => setState(() {
-                currentBlockName = value;
-              }));
-
-          var currentBlockTypeFuture = fetchCurrentBlockType(serverIP);
-          currentBlockTypeFuture.then((value) => setState(() {
-                currentBlockType = value;
-              }));
+          syncServer();
         });
       }
       return Scaffold(
@@ -144,39 +92,18 @@ class _MyHomePageState extends State<MyHomePage> {
             children: [
               const Text("No server IP set"),
               TextField(
+                controller: serverIPController,
                 decoration: const InputDecoration(
                   labelText: 'Server IP',
                 ),
-                onChanged: (text) {
-                  serverIP = text;
-                },
               ),
               TextButton(
                 onPressed: () {
                   setState(() {
+                    serverIP = serverIPController.text;
                     setServerIP(serverIP);
                     noServer = false;
-                    var blockTypesFuture = fetchBlockTypes(serverIP);
-                    blockTypesFuture.then((value) => setState(() {
-                          blockTypes = value;
-                        }));
-
-                    var timeBlocksFuture = fetchTimeBlocks(serverIP);
-                    timeBlocksFuture.then((value) => setState(() {
-                          timeBlocks = value;
-                        }));
-
-                    var currentBlockNameFuture =
-                        fetchCurrentBlockName(serverIP);
-                    currentBlockNameFuture.then((value) => setState(() {
-                          currentBlockName = value;
-                        }));
-
-                    var currentBlockTypeFuture =
-                        fetchCurrentBlockType(serverIP);
-                    currentBlockTypeFuture.then((value) => setState(() {
-                          currentBlockType = value;
-                        }));
+                    syncServer();
                   });
                 },
                 child: const Text("Set Server IP"),
@@ -231,27 +158,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             serverIP = nameController.text;
                             setServerIP(serverIP);
 
-                            var blockTypesFuture = fetchBlockTypes(serverIP);
-                            blockTypesFuture.then((value) => setState(() {
-                                  blockTypes = value;
-                                }));
-
-                            var timeBlocksFuture = fetchTimeBlocks(serverIP);
-                            timeBlocksFuture.then((value) => setState(() {
-                                  timeBlocks = value;
-                                }));
-
-                            var currentBlockNameFuture =
-                                fetchCurrentBlockName(serverIP);
-                            currentBlockNameFuture.then((value) => setState(() {
-                                  currentBlockName = value;
-                                }));
-
-                            var currentBlockTypeFuture =
-                                fetchCurrentBlockType(serverIP);
-                            currentBlockTypeFuture.then((value) => setState(() {
-                                  currentBlockType = value;
-                                }));
+                            syncServer();
                           });
                           Navigator.pop(context);
                         },
@@ -383,7 +290,9 @@ class _MyHomePageState extends State<MyHomePage> {
                                 id: 0,
                               );
 
-                              postBlockType(blockType, serverIP);
+                              if (postBlockType(blockType, serverIP)) {
+                                syncServer();
+                              }
                               Navigator.pop(context);
                             },
                             child: const Text('Add'),
@@ -466,41 +375,22 @@ class _MyHomePageState extends State<MyHomePage> {
                                 endTime: endTime,
                               );
 
-                              postTimeBlock(newBlock, serverIP);
-                              postCurrentBlockType(nextBlockType, serverIP);
-                              postCurrentBlockName(
-                                  nameController.text, serverIP);
+                              var success = false;
+                              if (postTimeBlock(newBlock, serverIP)) {
+                                success = true;
+                              }
+                              if (postCurrentBlockType(
+                                  nextBlockType, serverIP)) {
+                                success = true;
+                              }
+                              if (postCurrentBlockName(
+                                  nameController.text, serverIP)) {
+                                success = true;
+                              }
 
-                              var timeBlocksFuture = fetchTimeBlocks(serverIP);
-                              var blockTypesFuture = fetchBlockTypes(serverIP);
-                              var currentNameFuture =
-                                  fetchCurrentBlockName(serverIP);
-                              var currentTypeFuture =
-                                  fetchCurrentBlockType(serverIP);
-
-                              timeBlocksFuture.then((value) {
-                                setState(() {
-                                  timeBlocks = value;
-                                });
-                              });
-
-                              blockTypesFuture.then((value) {
-                                setState(() {
-                                  blockTypes = value;
-                                });
-                              });
-
-                              currentNameFuture.then((value) {
-                                setState(() {
-                                  currentBlockName = value;
-                                });
-                              });
-
-                              currentTypeFuture.then((value) {
-                                setState(() {
-                                  currentBlockType = value;
-                                });
-                              });
+                              if (success) {
+                                syncServer();
+                              }
 
                               Navigator.pop(context);
                             },
@@ -526,91 +416,34 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void postBlockType(BlockType blockType, String serverIP) {
-    var url = Uri.parse('http://$serverIP/blocktypes');
-    var response = http.post(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(blockType.toJson()),
-    );
+  void syncServer() {
+    var timeBlocksFuture = fetchTimeBlocks(serverIP);
+    var blockTypesFuture = fetchBlockTypes(serverIP);
+    var currentNameFuture = fetchCurrentBlockName(serverIP);
+    var currentTypeFuture = fetchCurrentBlockType(serverIP);
 
-    response.then((value) {
-      if (value.statusCode == 201) {
-        setState(() {
-          var blockTypesFuture = fetchBlockTypes(serverIP);
-          blockTypesFuture.then((value) => setState(() {
-                blockTypes = value;
-              }));
-        });
-      }
+    timeBlocksFuture.then((value) {
+      setState(() {
+        timeBlocks = value;
+      });
     });
-  }
 
-  void postTimeBlock(TimeBlock timeBlock, String serverIP) {
-    var url = Uri.parse('http://$serverIP/timeblocks');
-    var response = http.post(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(timeBlock.toJson()),
-    );
-
-    response.then((value) {
-      if (value.statusCode == 201) {
-        setState(() {
-          var timeBlocksFuture = fetchTimeBlocks(serverIP);
-          timeBlocksFuture.then((value) => setState(() {
-                timeBlocks = value;
-              }));
-        });
-      }
+    blockTypesFuture.then((value) {
+      setState(() {
+        blockTypes = value;
+      });
     });
-  }
 
-  void postCurrentBlockName(String name, String serverIP) {
-    var url = Uri.parse('http://$serverIP/currentblockname');
-    var response = http.post(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(name),
-    );
-
-    response.then((value) {
-      if (value.statusCode == 201) {
-        setState(() {
-          var currentBlockNameFuture = fetchCurrentBlockName(serverIP);
-          currentBlockNameFuture.then((value) => setState(() {
-                currentBlockName = value;
-              }));
-        });
-      }
+    currentNameFuture.then((value) {
+      setState(() {
+        currentBlockName = value;
+      });
     });
-  }
 
-  void postCurrentBlockType(int t, String serverIP) {
-    var url = Uri.parse('http://$serverIP/currentblocktype');
-    var response = http.post(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(t),
-    );
-
-    response.then((value) {
-      if (value.statusCode == 201) {
-        setState(() {
-          var currentBlockTypeFuture = fetchCurrentBlockType(serverIP);
-          currentBlockTypeFuture.then((value) => setState(() {
-                currentBlockType = value;
-              }));
-        });
-      }
+    currentTypeFuture.then((value) {
+      setState(() {
+        currentBlockType = value;
+      });
     });
   }
 }
