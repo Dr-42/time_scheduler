@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 import 'home_page.dart';
-import 'settings_page.dart';
+import 'analytics_page.dart';
+import 'history_page.dart';
 import 'data_types.dart';
 import 'server_io.dart';
 
@@ -231,12 +232,22 @@ class _MyHomePageState extends State<MyHomePage> {
               },
             ),
             ListTile(
-              title: const Text('Settings'),
-              leading: const Icon(Icons.settings),
+              title: const Text('History'),
+              leading: const Icon(Icons.history),
               onTap: () {
                 Navigator.pop(context);
                 setState(() {
                   selectedIndex = 1;
+                });
+              },
+            ),
+            ListTile(
+              title: const Text('Analytics'),
+              leading: const Icon(Icons.analytics),
+              onTap: () {
+                Navigator.pop(context);
+                setState(() {
+                  selectedIndex = 2;
                 });
               },
             ),
@@ -265,8 +276,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: Text("Please add a time block"),
                 )
               : selectedIndex == 1
-                  ? const SettingsPage()
-                  : throw Exception('Invalid index'),
+                  ? const HistoryPage()
+                  : selectedIndex == 2
+                      ? const AnalyticsPage()
+                      : throw Exception('Invalid index'),
       //Different floating action buttons for different pages
       floatingActionButton: switch (selectedIndex) {
         0 => Column(
@@ -438,8 +451,13 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         1 => FloatingActionButton(
             onPressed: () {},
-            tooltip: 'Add',
-            child: const Icon(Icons.add),
+            tooltip: 'Go',
+            child: const Icon(Icons.play_arrow),
+          ),
+        2 => FloatingActionButton(
+            onPressed: () {},
+            tooltip: 'Go',
+            child: const Icon(Icons.play_arrow),
           ),
         _ => throw Exception('Invalid index'),
       },
