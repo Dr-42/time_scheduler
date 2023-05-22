@@ -289,6 +289,11 @@ func getDayTimeBlocks(year int, month int, day int) ([]TimeBlock, error) {
 }
 
 func main() {
+	var port string = "8080"
+	if len(os.Args) > 1 {
+		port = os.Args[1]
+	}
+
 	// Initialize the HTTP routes
 	http.HandleFunc("/blocktypes", handleBlockTypes)
 	http.HandleFunc("/timeblocks", handleTimeBlocks)
@@ -296,8 +301,8 @@ func main() {
 	http.HandleFunc("/currentblocktype", handleCurrentBlockType)
 
 	// Start the HTTP server
-	fmt.Println("Server listening on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	fmt.Println("Server listening on port " + port + "...")
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
 // Handler for retrieving all block types and creating a new block type
