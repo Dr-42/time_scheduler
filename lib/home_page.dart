@@ -110,11 +110,28 @@ class TimeBlockCard extends StatelessWidget {
   Widget build(BuildContext context) {
     var cardFormattedTime =
         "${block.startTime.hour.toString().padLeft(2, '0')}:${block.startTime.minute.toString().padLeft(2, '0')} - ${block.endTime.hour.toString().padLeft(2, '0')}:${block.endTime.minute.toString().padLeft(2, '0')}";
+    var cardDuration = block.endTime.difference(block.startTime);
+    var cardFormattedDuration = "";
+    if (cardDuration.inHours > 0) {
+      cardFormattedDuration +=
+          "${cardDuration.inHours.toString().padLeft(2, '0')}h";
+    }
+    if (cardDuration.inMinutes.remainder(60) > 0 || cardDuration.inHours > 0) {
+      cardFormattedDuration +=
+          "${cardDuration.inMinutes.remainder(60).toString().padLeft(2, '0')}m";
+    }
+    cardFormattedDuration +=
+        "${cardDuration.inSeconds.remainder(60).toString().padLeft(2, '0')}s";
     return Card(
       child: ListTile(
         title: Text(block.title),
         subtitle: Text(cardFormattedTime),
         tileColor: blockTypes[block.type].color,
+        //Druation of the block
+        trailing: Text(
+          cardFormattedDuration,
+          style: const TextStyle(fontSize: 24),
+        ),
       ),
     );
   }
