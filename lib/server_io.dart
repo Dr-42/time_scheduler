@@ -15,6 +15,17 @@ Future<void> setServerIP(String serverIP) async {
   prefs.setString('serverIP', serverIP);
 }
 
+Future<String> getUserName() async {
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  return prefs.getString('userName') ?? "";
+}
+
+Future<void> setUserName(String userName) async {
+  //Save the server IP to shared preferences
+  final SharedPreferences prefs = await SharedPreferences.getInstance();
+  prefs.setString('userName', userName);
+}
+
 bool postBlockType(BlockType blockType, String serverIP) {
   var url = Uri.parse('http://$serverIP/blocktypes');
   var response = http.post(

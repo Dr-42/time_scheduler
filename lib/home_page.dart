@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'data_types.dart';
 
 class HomePage extends StatelessWidget {
+  final String userName;
   final List<BlockType> blockTypes;
   final List<TimeBlock> timeBlocks;
   final String currentBlockName;
@@ -12,6 +13,7 @@ class HomePage extends StatelessWidget {
 
   const HomePage({
     Key? key,
+    required this.userName,
     required this.blockTypes,
     required this.timeBlocks,
     required this.currentBlockName,
@@ -34,7 +36,7 @@ class HomePage extends StatelessWidget {
     return Column(
       children: [
         Text(
-          "Welcome Spandan!",
+          "Welcome $userName!",
           style: Theme.of(context).textTheme.displaySmall,
         ),
         CenterTimer(

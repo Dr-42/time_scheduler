@@ -46,14 +46,21 @@ class _MyHomePageState extends State<MyHomePage> {
   late String currentBlockName = "";
   late int currentBlockType = 0;
   late String serverIP = "";
+  late String userName = "";
   TextEditingController serverIPController = TextEditingController();
+  TextEditingController userNameController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     var serverIPFuture = getServerIP();
+    var userNameFuture = getUserName();
     serverIPFuture.then((value) => setState(() {
           serverIP = value;
+        }));
+
+    userNameFuture.then((value) => setState(() {
+          userName = value;
         }));
 
     if (serverIP == "") {
@@ -97,11 +104,19 @@ class _MyHomePageState extends State<MyHomePage> {
                   labelText: 'Server IP',
                 ),
               ),
+              TextField(
+                controller: userNameController,
+                decoration: const InputDecoration(
+                  labelText: 'User Name',
+                ),
+              ),
               TextButton(
                 onPressed: () {
                   setState(() {
                     serverIP = serverIPController.text;
+                    userName = userNameController.text;
                     setServerIP(serverIP);
+                    setUserName(userName);
                     noServer = false;
                     syncServer();
                   });
@@ -130,6 +145,7 @@ class _MyHomePageState extends State<MyHomePage> {
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
+                  var ipController = TextEditingController();
                   var nameController = TextEditingController();
 
                   return AlertDialog(
@@ -138,9 +154,15 @@ class _MyHomePageState extends State<MyHomePage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         TextField(
-                          controller: nameController,
+                          controller: ipController,
                           decoration: const InputDecoration(
                             labelText: 'Server IP',
+                          ),
+                        ),
+                        TextField(
+                          controller: nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'User Name',
                           ),
                         ),
                       ],
@@ -155,8 +177,15 @@ class _MyHomePageState extends State<MyHomePage> {
                       TextButton(
                         onPressed: () {
                           setState(() {
-                            serverIP = nameController.text;
-                            setServerIP(serverIP);
+                            if (ipController.text != "") {
+                              serverIP = ipController.text;
+                              setServerIP(serverIP);
+                            }
+
+                            if (nameController.text != "") {
+                              userName = nameController.text;
+                              setUserName(userName);
+                            }
 
                             syncServer();
                           });
@@ -225,6 +254,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: selectedIndex == 0 && timeBlocks.isNotEmpty
           ? HomePage(
+              userName: userName,
               timeBlocks: timeBlocks,
               blockTypes: blockTypes,
               currentBlockName: currentBlockName.replaceAll("\"", "").trim(),
