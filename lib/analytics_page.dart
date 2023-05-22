@@ -69,8 +69,15 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
               style: const TextStyle(fontSize: 24),
             ),
             // Collapsible list of time blocks
-            Expanded(
-              child: Container(),
+            const Expanded(
+              child: Column(
+                children: [
+                  Text(
+                    "Time Distribution",
+                    style: TextStyle(fontSize: 24),
+                  ),
+                ],
+              ),
             ),
           ]),
         );
@@ -90,7 +97,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
             "Select a date range to view analytics for:",
             style: TextStyle(fontSize: 18),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -104,7 +111,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                   Icons.check_circle,
                   color: Colors.grey,
                 ),
-              SizedBox(width: 20),
+              const SizedBox(width: 20),
               ElevatedButton(
                 onPressed: () {
                   showDatePicker(
@@ -139,7 +146,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                   Icons.check_circle,
                   color: Colors.grey,
                 ),
-              SizedBox(width: 20),
+              const SizedBox(width: 20),
               ElevatedButton(
                 onPressed: () {
                   showDatePicker(
