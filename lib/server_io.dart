@@ -130,12 +130,12 @@ Future<List<BlockType>> fetchBlockTypes(String serverIP) async {
   }
 }
 
-Future<List<TimeBlock>> fetchTimeBlocks(String serverIP) async {
+Future<List<TimeBlock>> fetchTimeBlocks(String serverIP, DateTime when) async {
   //Check if the server is running
   var query =
-      'http://$serverIP/timeblocks?year=${DateTime.now().year}&month=${DateTime.now().month}&day=${DateTime.now().day}';
+      'http://$serverIP/timeblocks?year=${when.year}&month=${when.month}&day=${when.day}';
   var queryPrev =
-      'http://$serverIP/timeblocks?year=${DateTime.now().year}&month=${DateTime.now().month}&day=${DateTime.now().day - 1}';
+      'http://$serverIP/timeblocks?year=${when.year}&month=${when.month}&day=${when.day - 1}';
   var serverRunning = false;
   while (!serverRunning) {
     if (serverIP == "") {

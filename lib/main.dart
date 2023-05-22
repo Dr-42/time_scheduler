@@ -276,9 +276,13 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: Text("Please add a time block"),
                 )
               : selectedIndex == 1
-                  ? const HistoryPage()
+                  ? HistoryPage(
+                      serverIP: serverIP,
+                    )
                   : selectedIndex == 2
-                      ? const AnalyticsPage()
+                      ? AnalyticsPage(
+                          serverIP: serverIP,
+                        )
                       : throw Exception('Invalid index'),
       //Different floating action buttons for different pages
       floatingActionButton: switch (selectedIndex) {
@@ -449,23 +453,15 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ],
           ),
-        1 => FloatingActionButton(
-            onPressed: () {},
-            tooltip: 'Go',
-            child: const Icon(Icons.play_arrow),
-          ),
-        2 => FloatingActionButton(
-            onPressed: () {},
-            tooltip: 'Go',
-            child: const Icon(Icons.play_arrow),
-          ),
+        1 => Container(),
+        2 => Container(),
         _ => throw Exception('Invalid index'),
       },
     );
   }
 
   void syncServer() {
-    var timeBlocksFuture = fetchTimeBlocks(serverIP);
+    var timeBlocksFuture = fetchTimeBlocks(serverIP, DateTime.now());
     var blockTypesFuture = fetchBlockTypes(serverIP);
     var currentNameFuture = fetchCurrentBlockName(serverIP);
     var currentTypeFuture = fetchCurrentBlockType(serverIP);
