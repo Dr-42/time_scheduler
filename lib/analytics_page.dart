@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:time_scheduler/home_page.dart';
 import 'server_io.dart';
 import 'data_types.dart';
+import 'dart:math';
 
 class AnalyticsPage extends StatefulWidget {
   final String serverIP;
@@ -75,6 +77,11 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
         });
         fetched = true;
       } else {
+        if (analysis == null) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
         return Center(
           child: Column(children: [
             Text(
@@ -85,24 +92,22 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
             Expanded(
               child: Column(
                 children: [
-                  //Show the analysis
-                  Text(
-                    "Analysis:",
-                    style: const TextStyle(fontSize: 24),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: analysis!.percentages.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          title: Text(
-                            "$index]: ${analysis!.percentages[index]}%",
-                            style: const TextStyle(fontSize: 18),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                  SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      FloatChartWidget(
+                        floats: analysis!.percentages,
+                        blockTypes: blockTypes,
+                        height: 250,
+                      ),
+                      SizedBox(width: 20),
+                      PieChartLegend(
+                        blockTypes: blockTypes,
+                        height: 200,
+                      ),
+                    ],
+                  )
                 ],
               ),
             ),
@@ -198,4 +203,93 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       ),
     );
   }
+}
+
+class FloatChartWidget extends StatelessWidget {
+  final List<double> floats;
+  final List<BlockType> blockTypes;
+  final double height;
+
+  FloatChartWidget({
+    required this.floats,
+    required this.blockTypes,
+    required this.height,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 200, // Adjust the width of the chart
+      height: height,
+      child: CustomPaint(
+        painter: ChartPainter(floats: floats, blockTypes: blockTypes),
+      ),
+    );
+  }
+}
+
+class ChartPainter extends CustomPainter {
+  final List<double> floats;
+  final List<BlockType> blockTypes;
+
+  ChartPainter({required this.floats, required this.blockTypes});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double barWidth = size.width / floats.length;
+    final double chartHeight = size.height * 0.8;
+    final double chartBottom = size.height * 0.9;
+    double lineSpacing = chartHeight / 10;
+    final double maxFloat = floats.reduce(max);
+
+    // Draw background lines at every 10% interval
+    //Determine the max floats in the floats array
+    var maximum = 0.0;
+    for (int i = 0; i < floats.length; i++) {
+      if (floats[i] > maximum) {
+        maximum = floats[i];
+      }
+    }
+
+    lineSpacing = chartHeight / (maximum / 10);
+    //Round the max float up to the nearest 10
+    maximum = (maximum / 10).ceil() * 10;
+
+    for (int i = 0; i <= maximum / 10; i++) {
+      double lineY = chartBottom - (lineSpacing * i);
+
+      Paint linePaint = Paint()
+        ..color = Colors.grey.withOpacity(0.5)
+        ..strokeWidth = 1;
+
+      canvas.drawLine(
+        Offset(0, lineY),
+        Offset(size.width, lineY),
+        linePaint,
+      );
+    }
+
+    for (int i = 0; i < floats.length; i++) {
+      double value = floats[i];
+      BlockType blockType = blockTypes[i];
+      double barHeight = chartHeight * (value / maxFloat);
+      double barTop = chartBottom - barHeight;
+
+      Rect barRect = Rect.fromLTRB(
+        i * barWidth,
+        barTop,
+        (i + 1) * barWidth,
+        chartBottom,
+      );
+
+      Paint barPaint = Paint()..color = blockType.color;
+      canvas.drawRect(barRect, barPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(ChartPainter oldDelegate) => true;
+
+  @override
+  bool shouldRebuildSemantics(ChartPainter oldDelegate) => false;
 }

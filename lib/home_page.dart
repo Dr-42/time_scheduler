@@ -61,9 +61,11 @@ class HomePage extends StatelessWidget {
               timeBlocks: timeBlocks,
               blockTypes: blockTypes,
               curBlockType: currentBlockType,
+              height: 100,
             ),
             PieChartLegend(
               blockTypes: blockTypes,
+              height: 100,
             ),
           ],
         ),
@@ -202,7 +204,12 @@ class _CenterTimerState extends State<CenterTimer> {
 
 class PieChartLegend extends StatefulWidget {
   final List<BlockType> blockTypes;
-  const PieChartLegend({Key? key, required this.blockTypes}) : super(key: key);
+  final double height;
+  const PieChartLegend({
+    Key? key,
+    required this.blockTypes,
+    required this.height,
+  }) : super(key: key);
 
   @override
   State<PieChartLegend> createState() => _PieChartLegendState();
@@ -213,7 +220,7 @@ class _PieChartLegendState extends State<PieChartLegend> {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 100,
-      height: 100,
+      height: widget.height,
       child: ListView(
         children: [
           for (var blockType in widget.blockTypes)
@@ -247,11 +254,13 @@ class PieChart extends StatefulWidget {
     required this.blockTypes,
     required this.timeBlocks,
     required this.curBlockType,
+    required this.height,
   }) : super(key: key);
 
   final List<BlockType> blockTypes;
   final List<TimeBlock> timeBlocks;
   final int curBlockType;
+  final double height;
 
   @override
   State<PieChart> createState() => _PieChartState();
@@ -303,7 +312,7 @@ class _PieChartState extends State<PieChart> {
       padding: const EdgeInsets.all(28.0),
       child: SizedBox(
         width: 200,
-        height: 100,
+        height: widget.height,
         child: CustomPaint(
           painter: PieChartPainter(data, total, widget.blockTypes),
         ),
