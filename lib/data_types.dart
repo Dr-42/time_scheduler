@@ -112,3 +112,66 @@ class BlockType {
     };
   }
 }
+
+class Trend {
+  final DateTime date;
+  final Duration timeSpent;
+  final int blockTypeId;
+
+  Trend({
+    required this.date,
+    required this.timeSpent,
+    required this.blockTypeId,
+  });
+
+  static Trend fromJson(Map<String, dynamic> json) {
+    return Trend(
+      date: DateTime(
+        json['day']['year'],
+        json['day']['month'],
+        json['day']['day'],
+        json['day']['hour'],
+        json['day']['minute'],
+        json['day']['second'],
+      ),
+      timeSpent: Duration(
+        seconds: json['timeSpent']['seconds'],
+        minutes: json['timeSpent']['minutes'],
+        hours: json['timeSpent']['hours'],
+      ),
+      blockTypeId: json['blockTypeID'],
+    );
+  }
+}
+
+class Analysis {
+  final List<double> percentages;
+  final List<Trend> trends;
+
+  Analysis({
+    required this.percentages,
+    required this.trends,
+  });
+
+  static Analysis fromJson(Map<String, dynamic> json) {
+    List<double> percentages = [];
+    List<Trend> trends = [];
+    //Parse percentages as a list of floats
+    for (dynamic value in json['percentages']) {
+      if (value is int) {
+        percentages.add(value.toDouble()); // Convert int to double
+      } else if (value is double) {
+        percentages.add(value);
+      } else {
+        throw FormatException('Invalid percentage value: $value');
+      }
+    }
+    for (var trend in json['trends']) {
+      trends.add(Trend.fromJson(trend));
+    }
+    return Analysis(
+      percentages: percentages,
+      trends: trends,
+    );
+  }
+}

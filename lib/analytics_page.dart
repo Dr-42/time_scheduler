@@ -22,6 +22,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   bool fetched = false;
   bool startDateSelected = false;
   bool endDateSelected = false;
+  Analysis? analysis;
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +61,18 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
             blockTypes = value;
           });
         });
+
+        var analysisFuture = fetchAnalysis(
+          widget.serverIP,
+          _startDate!,
+          _endDate!,
+        );
+
+        analysisFuture.then((value) {
+          setState(() {
+            analysis = value;
+          });
+        });
         fetched = true;
       } else {
         return Center(
@@ -69,12 +82,26 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
               style: const TextStyle(fontSize: 24),
             ),
             // Collapsible list of time blocks
-            const Expanded(
+            Expanded(
               child: Column(
                 children: [
+                  //Show the analysis
                   Text(
-                    "Time Distribution",
-                    style: TextStyle(fontSize: 24),
+                    "Analysis:",
+                    style: const TextStyle(fontSize: 24),
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: analysis!.percentages.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          title: Text(
+                            "$index]: ${analysis!.percentages[index]}%",
+                            style: const TextStyle(fontSize: 18),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),

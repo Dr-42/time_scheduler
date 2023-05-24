@@ -130,6 +130,37 @@ Future<List<BlockType>> fetchBlockTypes(String serverIP) async {
   }
 }
 
+Future<Analysis?> fetchAnalysis(
+  String serverIP,
+  DateTime startTime,
+  DateTime endTime,
+) async {
+  var query = 'http://$serverIP/analysis?'
+      'startyear=${startTime.year}&startmonth=${startTime.month}&startday=${startTime.day}'
+      '&endyear=${endTime.year}&endmonth=${endTime.month}&endday=${endTime.day}';
+
+  var serverRunning = false;
+  while (!serverRunning) {
+    if (serverIP == "") {
+      return null;
+    }
+    try {
+      var response = await http.get(Uri.parse(query));
+      if (response.statusCode == 200) {
+        serverRunning = true;
+      }
+    } catch (e) {
+      serverRunning = false;
+    }
+  }
+  var response = await http.get(Uri.parse(query));
+  if (response.statusCode == 200) {
+    final Map<String, dynamic> jsonMap = json.decode(response.body);
+    return Analysis.fromJson(jsonMap);
+  }
+  return null;
+}
+
 Future<List<TimeBlock>> fetchTimeBlocks(String serverIP, DateTime when) async {
   //Check if the server is running
   var query =
