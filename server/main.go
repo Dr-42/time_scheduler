@@ -7,8 +7,45 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
+	"time"
 )
+
+type Duration struct {
+	Second int64 `json:"seconds"`
+	Minute int64 `json:"minutes"`
+	Hour   int64 `json:"hours"`
+}
+
+func (d Duration) toSeconds() int64 {
+	return d.Second + d.Minute*60 + d.Hour*3600
+}
+
+func timeSpan(t1 Time, t2 Time) Duration {
+	secs := t2.toISO() - t1.toISO()
+	return fromSeconds(secs)
+}
+
+func fromSeconds(seconds int64) Duration {
+	hours := seconds / 3600
+	seconds -= hours * 3600
+	minutes := seconds / 60
+	seconds -= minutes * 60
+	return Duration{
+		Second: seconds,
+		Minute: minutes,
+		Hour:   hours,
+	}
+}
+
+func (t Duration) Add(other Duration) Duration {
+	return fromSeconds(t.toSeconds() + other.toSeconds())
+}
+
+func (t Duration) Subtract(other Duration) Duration {
+	return fromSeconds(t.toSeconds() - other.toSeconds())
+}
 
 type Time struct {
 	Year   int `json:"year"`
@@ -19,7 +56,7 @@ type Time struct {
 	Second int `json:"second"`
 }
 
-func (t Time) String() string {
+func (t Time) toString() string {
 	return fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d", t.Year, t.Month, t.Day, t.Hour, t.Minute, t.Second)
 }
 
@@ -34,7 +71,52 @@ func (t Time) FileName() string {
 	return fmt.Sprintf("timeblocks/%d-%02d-%02d.json", t.Year, t.Month, t.Day)
 }
 
-// BlockType represents the structure of a block type
+func (t Time) toISO() int64 {
+	timeObj := time.Date(t.Year, time.Month(t.Month), t.Day, t.Hour, t.Minute, t.Second, 0, time.UTC)
+	unixTimestamp := timeObj.Unix()
+	return unixTimestamp
+}
+
+func fromISO(timestamp int64) Time {
+	// Create a time.Time object from the Unix timestamp
+	timeObj := time.Unix(timestamp, 0)
+
+	// Extract the individual components from the time.Time object
+	year := timeObj.Year()
+	month := int(timeObj.Month())
+	day := timeObj.Day()
+	hour := timeObj.Hour()
+	minute := timeObj.Minute()
+	second := timeObj.Second()
+
+	// Create and return the Time struct
+	return Time{
+		Year:   year,
+		Month:  month,
+		Day:    day,
+		Hour:   hour,
+		Minute: minute,
+		Second: second,
+	}
+}
+
+func (t Time) Add(d Duration) Time {
+	t2 := fromISO(t.toISO() + d.toSeconds())
+	return t2
+}
+
+func (t Time) Before(other Time) bool {
+	return t.toISO() < other.toISO()
+}
+
+func (t Time) After(other Time) bool {
+	return t.toISO() > other.toISO()
+}
+
+func (t Time) Equal(other Time) bool {
+	return t.toISO() == other.toISO()
+}
+
 type BlockType struct {
 	ID    int    `json:"id"`
 	Name  string `json:"name"`
@@ -159,6 +241,10 @@ type TimeBlock struct {
 	EndTime     Time   `json:"endTime"`
 	BlockTypeID int    `json:"blockTypeId"`
 	Title       string `json:"title"`
+}
+
+func (t TimeBlock) Duration() Duration {
+	return timeSpan(t.StartTime, t.EndTime)
 }
 
 func CheckOverlaps(t []TimeBlock) bool {
@@ -299,6 +385,7 @@ func main() {
 	http.HandleFunc("/timeblocks", handleTimeBlocks)
 	http.HandleFunc("/currentblockname", handleCurrentBlockName)
 	http.HandleFunc("/currentblocktype", handleCurrentBlockType)
+	http.HandleFunc("/analysis", handleAnalysis)
 
 	// Start the HTTP server
 	fmt.Println("Server listening on port " + port + "...")
@@ -570,4 +657,181 @@ func getCurrentBlockType() (int, error) {
 		return 0, err
 	}
 	return currentBlockType, nil
+}
+
+func handleAnalysis(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		// Get the analysis
+		// Parse the query string
+		query := r.URL.Query()
+
+		startDay := query.Get("startday")
+		startMonth := query.Get("startmonth")
+		startYear := query.Get("startyear")
+		endDay := query.Get("endday")
+		endMonth := query.Get("endmonth")
+		endYear := query.Get("endyear")
+
+		l_startDay, err := strconv.Atoi(startDay)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			fmt.Println("GET /analysis - Bad request")
+			fmt.Println(err)
+			return
+		}
+		l_startMonth, err := strconv.Atoi(startMonth)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			fmt.Println("GET /analysis - Bad request")
+			fmt.Println(err)
+			return
+		}
+		l_startYear, err := strconv.Atoi(startYear)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			fmt.Println("GET /analysis - Bad request")
+			fmt.Println(err)
+			return
+		}
+		l_endDay, err := strconv.Atoi(endDay)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			fmt.Println("GET /analysis - Bad request")
+			fmt.Println(err)
+			return
+		}
+		l_endMonth, err := strconv.Atoi(endMonth)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			fmt.Println("GET /analysis - Bad request")
+			fmt.Println(err)
+			return
+		}
+		l_endYear, err := strconv.Atoi(endYear)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			fmt.Println("GET /analysis - Bad request")
+			fmt.Println(err)
+			return
+		}
+
+		startTime := Time{Day: l_startDay, Month: l_startMonth, Year: l_startYear, Hour: 0, Minute: 0, Second: 0}
+		endTime := Time{Day: l_endDay, Month: l_endMonth, Year: l_endYear, Hour: 23, Minute: 59, Second: 59}
+
+		analysis, err := getAnalysis(startTime, endTime)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			fmt.Println("GET /analysis - Internal server error")
+			fmt.Println(err)
+			return
+		}
+
+		// Send the analysis
+		err = json.NewEncoder(w).Encode(analysis)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			fmt.Println("GET /analysis - Internal server error")
+			fmt.Println(err)
+			return
+		}
+		fmt.Println("GET /analysis")
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
+// Trend is the time spent on a block type for the duration
+// Day holds the day
+// TimeSpent holds the time spent on the block type on that day
+type Trend struct {
+	Day         Time     `json:"day"`
+	TimeSpent   Duration `json:"timeSpent"`
+	BlockTypeID int      `json:"blockTypeID"`
+}
+
+// Analysis is the analysis of the time spent on each block type
+// for a given time period got from the query string
+type Analysis struct {
+	Percentages []float64 `json:"percentages"`
+	Trends      []Trend   `json:"trends"`
+}
+
+// getAnalysis returns the analysis for the given time period
+func getAnalysis(startTime Time, endTime Time) (Analysis, error) {
+	// Get the blockTypes
+	blockTypes, err := getBlockTypes()
+	if err != nil {
+		return Analysis{}, err
+	}
+
+	sort.Slice(blockTypes, func(i, j int) bool {
+		return blockTypes[i].ID < blockTypes[j].ID
+	})
+
+	var analysis Analysis
+
+	// Get the blocks
+	for startTime.Before(endTime) {
+		// Get the blocks for the day
+		blocks, err := getDayTimeBlocks(startTime.Year, startTime.Month, startTime.Day)
+		if err != nil {
+			return Analysis{}, err
+		}
+
+		for _, blockType := range blockTypes {
+			if blockType.ID == 0 {
+				continue
+			}
+			var timeSpent Duration = Duration{Hour: 0, Minute: 0, Second: 0}
+			for _, block := range blocks {
+				if block.BlockTypeID == blockType.ID {
+					timeSpent = timeSpent.Add(block.Duration())
+				}
+			}
+			trendDay := Time{
+				Day:    startTime.Day,
+				Month:  startTime.Month,
+				Year:   startTime.Year,
+				Hour:   0,
+				Minute: 0,
+				Second: 0,
+			}
+			newTrend := Trend{Day: trendDay, TimeSpent: timeSpent, BlockTypeID: blockType.ID}
+			analysis.Trends = append(analysis.Trends, newTrend)
+		}
+
+		startTime = startTime.Add(Duration{Hour: 24, Minute: 0, Second: 0})
+	}
+
+	// Compute the percentages from the trends for each block type
+
+	// Step 1: Initialize a map to store the total time spent on each block type
+	totalTimeByBlockType := make(map[int]Duration)
+
+	// Step 2: Iterate over each trend and update the total time spent for each block type
+	for _, trend := range analysis.Trends {
+		totalTimeByBlockType[trend.BlockTypeID] = totalTimeByBlockType[trend.BlockTypeID].Add(trend.TimeSpent)
+	}
+
+	// Step 3: Calculate the total time spent across all block types
+	totalDuration := Duration{Hour: 0, Minute: 0, Second: 0}
+	for _, duration := range totalTimeByBlockType {
+		totalDuration = totalDuration.Add(duration)
+	}
+
+	// Step 4: Initialize a slice to store the percentages of total time spent for each block type
+	percentages := make([]float64, len(blockTypes))
+
+	// Step 5: Iterate over block types and calculate the percentage of total time spent
+	for i, blockType := range blockTypes {
+		totalTime := totalTimeByBlockType[blockType.ID]
+		percentage := float64(totalTime.toSeconds()) / float64(totalDuration.toSeconds()) * 100
+		percentages[i] = percentage
+	}
+
+	analysis.Percentages = percentages
+
+	return analysis, nil
 }
