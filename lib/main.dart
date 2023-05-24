@@ -293,6 +293,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 tooltip: "Add a block type",
                 child: const Icon(Icons.add_box),
                 onPressed: () {
+                  syncServer();
                   //New popup window to add a new blocktype
                   showDialog(
                     context: context,
@@ -353,6 +354,7 @@ class _MyHomePageState extends State<MyHomePage> {
               const SizedBox(height: 10),
               FloatingActionButton(
                 onPressed: () {
+                  syncServer();
                   //New popup window to add a new block
                   showDialog(
                     context: context,
