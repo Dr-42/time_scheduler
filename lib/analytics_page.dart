@@ -86,7 +86,8 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
         return Center(
           child: Column(children: [
             Text(
-              "Analytics for ${_startDate!.day}/${_startDate!.month}/${_startDate!.year} - ${_endDate!.day}/${_endDate!.month}/${_endDate!.year}",
+              "${_startDate!.day}/${_startDate!.month}/${_startDate!.year} - ${_endDate!.day}/${_endDate!.month}/${_endDate!.year}",
+              textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 24),
             ),
             const Divider(),
