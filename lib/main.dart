@@ -8,6 +8,7 @@ import 'data_types.dart';
 import 'server_io.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -38,7 +39,7 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   var selectedIndex = 0;
   var noServer = true;
 
@@ -50,6 +51,13 @@ class _MyHomePageState extends State<MyHomePage> {
   late String userName = "";
   TextEditingController serverIPController = TextEditingController();
   TextEditingController userNameController = TextEditingController();
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      syncServer();
+    }
+  }
 
   @override
   void initState() {
@@ -78,6 +86,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addObserver(this);
     if (noServer) {
       var serverIPFuture = getServerIP();
       serverIPFuture.then((value) => setState(() {
