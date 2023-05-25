@@ -355,8 +355,12 @@ class AreaCurveWidget extends StatelessWidget {
         .toList();
 
     // Extract the unique days from filteredTrends
-    Set<int> uniqueDays = filteredTrends.map((trend) => trend.date.day).toSet();
-    List<int> sortedDays = uniqueDays.toList()..sort();
+    Set<DateTime> uniqueDays =
+        filteredTrends.map((trend) => trend.date).toSet();
+    List<DateTime> sortedDays = uniqueDays
+        .map((day) => DateTime(day.year, day.month, day.day))
+        .toList()
+      ..sort();
 
     return SizedBox(
       height: 300, // adjust the height as needed
@@ -375,13 +379,13 @@ class AreaCurveWidget extends StatelessWidget {
 
 class AreaCurvePainter extends CustomPainter {
   final List<Trend> trends;
-  final List<int> sortedDays;
+  final List<DateTime> uniqueDates;
   final List<BlockType> blockTypes;
   final List<int> selectedIDs;
 
   AreaCurvePainter(
     this.trends,
-    this.sortedDays,
+    this.uniqueDates,
     this.blockTypes,
     this.selectedIDs,
   );
@@ -414,14 +418,18 @@ class AreaCurvePainter extends CustomPainter {
             .color
             .withOpacity(0.5); // Adjust the color and opacity as desired
 
+      // Calculate the available space between x-axis labels
+      final double availableLabelSpace = curveWidth / (uniqueDates.length - 1);
+
       for (int i = 0; i < filteredTrends.length; i++) {
         final trend = filteredTrends[i];
-        final int day = trend.date.day;
-        final int dayIndex = sortedDays.indexOf(day);
+        final DateTime date = trend.date;
+
+        final int dayIndex = uniqueDates.indexOf(date);
 
         if (dayIndex != -1) {
           final double x =
-              padding + dayIndex * curveWidth / (sortedDays.length - 1);
+              padding + dayIndex * curveWidth / (uniqueDates.length - 1);
           final double y = padding +
               (1 - trend.timeSpent.inMinutes / (60 * maxTimeSpent)) *
                   curveHeight;
@@ -431,8 +439,7 @@ class AreaCurvePainter extends CustomPainter {
             curvePath.lineTo(x, y);
           } else {
             final prevTrend = filteredTrends[i - 1];
-            final int prevDay = prevTrend.date.day;
-            final int prevDayIndex = sortedDays.indexOf(prevDay);
+            final int prevDayIndex = uniqueDates.indexOf(prevTrend.date);
 
             if (prevDayIndex != -1 && prevTrend.blockTypeId == selectedID) {
               curvePath.lineTo(x, y);
@@ -460,13 +467,33 @@ class AreaCurvePainter extends CustomPainter {
       );
 
       // Draw day labels
-      for (int i = 0; i < sortedDays.length; i++) {
-        final dayLabel = sortedDays[i].toString();
-        final labelOffset = padding + i * curveWidth / (sortedDays.length - 1);
-        textPainter.text = TextSpan(text: dayLabel, style: textStyle);
-        textPainter.layout();
-        textPainter.paint(
-            canvas, Offset(labelOffset, size.height - padding + 4));
+      for (int i = 0; i < uniqueDates.length; i++) {
+        final DateTime date = uniqueDates[i];
+        final String dayLabel = date.day.toString();
+        final labelOffset = padding + i * availableLabelSpace;
+
+        if (availableLabelSpace >= 40.0) {
+          // Draw the label only if the available space is sufficient
+          textPainter.text = TextSpan(text: dayLabel, style: textStyle);
+          textPainter.layout();
+          textPainter.paint(
+              canvas, Offset(labelOffset, size.height - padding + 4));
+        } else {
+          //Print the range of dates
+          final DateTime firstDate = uniqueDates.first;
+          final DateTime lastDate = uniqueDates.last;
+          final String firstDayLabel = firstDate.day.toString();
+          final String lastDayLabel = lastDate.day.toString();
+
+          textPainter.text = TextSpan(text: firstDayLabel, style: textStyle);
+          textPainter.layout();
+          textPainter.paint(canvas, Offset(padding, size.height - padding + 4));
+
+          textPainter.text = TextSpan(text: lastDayLabel, style: textStyle);
+          textPainter.layout();
+          textPainter.paint(canvas,
+              Offset(size.width - padding - 8, size.height - padding + 4));
+        }
       }
 
       // Draw hour labels
@@ -489,7 +516,7 @@ class AreaCurvePainter extends CustomPainter {
   @override
   bool shouldRepaint(AreaCurvePainter oldDelegate) {
     return oldDelegate.trends != trends ||
-        oldDelegate.sortedDays != sortedDays ||
+        oldDelegate.uniqueDates != uniqueDates ||
         oldDelegate.selectedIDs != selectedIDs;
   }
 }
