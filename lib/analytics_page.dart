@@ -111,7 +111,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                   ),
                   AreaCurveWidget(
                     trends: analysis!.trends,
-                    selectedBlockTypeId: 4,
+                    selectedBlockTypeIds: [2, 3, 10],
                     blockTypes: blockTypes,
                   ),
                 ],
@@ -302,19 +302,19 @@ class ChartPainter extends CustomPainter {
 
 class AreaCurveWidget extends StatelessWidget {
   final List<Trend> trends;
-  final int selectedBlockTypeId;
+  final List<int> selectedBlockTypeIds;
   final List<BlockType> blockTypes;
 
   AreaCurveWidget({
     required this.trends,
-    required this.selectedBlockTypeId,
+    required this.selectedBlockTypeIds,
     required this.blockTypes,
   });
 
   @override
   Widget build(BuildContext context) {
     List<Trend> filteredTrends = trends
-        .where((trend) => trend.blockTypeId == selectedBlockTypeId)
+        .where((trend) => selectedBlockTypeIds.contains(trend.blockTypeId))
         .toList();
 
     // Extract the unique days from filteredTrends
@@ -329,7 +329,7 @@ class AreaCurveWidget extends StatelessWidget {
           filteredTrends,
           sortedDays,
           blockTypes,
-          selectedBlockTypeId,
+          selectedBlockTypeIds,
         ),
       ),
     );
@@ -340,13 +340,13 @@ class AreaCurvePainter extends CustomPainter {
   final List<Trend> trends;
   final List<int> sortedDays;
   final List<BlockType> blockTypes;
-  final int selectedID;
+  final List<int> selectedIDs;
 
   AreaCurvePainter(
     this.trends,
     this.sortedDays,
     this.blockTypes,
-    this.selectedID,
+    this.selectedIDs,
   );
 
   @override
@@ -364,83 +364,95 @@ class AreaCurvePainter extends CustomPainter {
             .toDouble() +
         1;
 
-    final curvePath = Path();
-    final curvePaint = Paint()
-      ..style = PaintingStyle.fill
-      ..color = blockTypes[selectedID]
-          .color
-          .withOpacity(0.5); // Adjust the color and opacity as desired
-
-    for (int i = 0; i < trends.length; i++) {
-      final trend = trends[i];
-      final int day = trend.date.day;
-      final int dayIndex = sortedDays.indexOf(day);
-
-      if (dayIndex != -1) {
-        final double x =
-            padding + dayIndex * curveWidth / (sortedDays.length - 1);
-        final double y = padding +
-            (1 - trend.timeSpent.inMinutes / (60 * maxTimeSpent)) * curveHeight;
-
-        if (i == 0) {
-          curvePath.moveTo(x, size.height - padding);
-          curvePath.lineTo(x, y);
-        } else {
-          final prevTrend = trends[i - 1];
-          final int prevDay = prevTrend.date.day;
-          final int prevDayIndex = sortedDays.indexOf(prevDay);
-
-          if (prevDayIndex != -1) {
-            final double prevX =
-                padding + prevDayIndex * curveWidth / (sortedDays.length - 1);
-            final double prevY = padding +
-                (1 - prevTrend.timeSpent.inHours / maxTimeSpent) * curveHeight;
-            final double controlPointX = (prevX + x) / 2;
-            curvePath.quadraticBezierTo(controlPointX, prevY, x, y);
-          }
-        }
-      }
-    }
-
-    curvePath.lineTo(size.width - padding, size.height - padding);
-    curvePath.close();
-
-    canvas.drawPath(curvePath, curvePaint);
-
-    final textStyle = TextStyle(
-      color: Colors.white, // Adjust the label color as desired
-      fontSize: 12, // Adjust the label font size as desired
-    );
-
     final textPainter = TextPainter(textDirection: TextDirection.ltr);
 
-    // Draw day labels
-    for (int i = 0; i < sortedDays.length; i++) {
-      final dayLabel = sortedDays[i].toString();
-      final labelOffset = padding + i * curveWidth / (sortedDays.length - 1);
-      textPainter.text = TextSpan(text: dayLabel, style: textStyle);
-      textPainter.layout();
-      textPainter.paint(canvas, Offset(labelOffset, size.height - padding + 4));
-    }
+    for (int selectedID in selectedIDs) {
+      final filteredTrends =
+          trends.where((trend) => trend.blockTypeId == selectedID).toList();
 
-    // Draw hour labels
-    final List<double> hourLabels = [
-      0,
-      (maxTimeSpent ~/ 2.0).toDouble(),
-      maxTimeSpent
-    ];
-    for (double hour in hourLabels) {
-      final hourLabel = hour.toString();
-      final labelOffset = padding - 24;
-      final y = padding + (1 - hour / maxTimeSpent) * curveHeight;
-      textPainter.text = TextSpan(text: hourLabel, style: textStyle);
-      textPainter.layout();
-      textPainter.paint(canvas, Offset(labelOffset, y - 8));
+      final curvePath = Path();
+      final curvePaint = Paint()
+        ..style = PaintingStyle.fill
+        ..color = blockTypes[selectedID]
+            .color
+            .withOpacity(0.5); // Adjust the color and opacity as desired
+
+      for (int i = 0; i < filteredTrends.length; i++) {
+        final trend = filteredTrends[i];
+        final int day = trend.date.day;
+        final int dayIndex = sortedDays.indexOf(day);
+
+        if (dayIndex != -1) {
+          final double x =
+              padding + dayIndex * curveWidth / (sortedDays.length - 1);
+          final double y = padding +
+              (1 - trend.timeSpent.inMinutes / (60 * maxTimeSpent)) *
+                  curveHeight;
+
+          if (i == 0 && trend.blockTypeId == selectedID) {
+            curvePath.moveTo(x, size.height - padding);
+            curvePath.lineTo(x, y);
+          } else {
+            final prevTrend = filteredTrends[i - 1];
+            final int prevDay = prevTrend.date.day;
+            final int prevDayIndex = sortedDays.indexOf(prevDay);
+
+            if (prevDayIndex != -1 && prevTrend.blockTypeId == selectedID) {
+              curvePath.lineTo(x, y);
+            }
+          }
+
+          // Draw circles at data points
+          final circleRadius = 4.0;
+          final circleCenter = Offset(x, y);
+          final circlePaint = Paint();
+
+          circlePaint.color = blockTypes[selectedID].color.withOpacity(1.0);
+          canvas.drawCircle(circleCenter, circleRadius, circlePaint);
+        }
+      }
+
+      curvePath.lineTo(size.width - padding, size.height - padding);
+      curvePath.close();
+
+      canvas.drawPath(curvePath, curvePaint);
+
+      final textStyle = TextStyle(
+        color: Colors.white, // Adjust the label color as desired
+        fontSize: 12, // Adjust the label font size as desired
+      );
+
+      // Draw day labels
+      for (int i = 0; i < sortedDays.length; i++) {
+        final dayLabel = sortedDays[i].toString();
+        final labelOffset = padding + i * curveWidth / (sortedDays.length - 1);
+        textPainter.text = TextSpan(text: dayLabel, style: textStyle);
+        textPainter.layout();
+        textPainter.paint(
+            canvas, Offset(labelOffset, size.height - padding + 4));
+      }
+
+      // Draw hour labels
+      final List<double> hourLabels = [
+        0,
+        (maxTimeSpent ~/ 2.0).toDouble(),
+        maxTimeSpent
+      ];
+      for (double hour in hourLabels) {
+        final hourLabel = hour.toString();
+        final labelOffset = padding - 24;
+        final y = padding + (1 - hour / maxTimeSpent) * curveHeight;
+        textPainter.text = TextSpan(text: hourLabel, style: textStyle);
+        textPainter.layout();
+        textPainter.paint(canvas, Offset(labelOffset, y - 8));
+      }
     }
   }
 
   @override
   bool shouldRepaint(AreaCurvePainter oldDelegate) {
-    return oldDelegate.trends != trends || oldDelegate.sortedDays != sortedDays;
+    return oldDelegate.trends != trends ||
+        oldDelegate.sortedDays != sortedDays ||
+        oldDelegate.selectedIDs != selectedIDs;
   }
 }
