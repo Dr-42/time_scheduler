@@ -38,6 +38,7 @@ class HomePage extends StatelessWidget {
         Text(
           "Welcome $userName!",
           style: Theme.of(context).textTheme.displaySmall,
+          textAlign: TextAlign.center,
         ),
         CenterTimer(
           startTime: curTime,
