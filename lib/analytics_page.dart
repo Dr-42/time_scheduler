@@ -25,6 +25,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   bool startDateSelected = false;
   bool endDateSelected = false;
   Analysis? analysis;
+  List<int> selectedBlockTypeIDs = [];
 
   @override
   Widget build(BuildContext context) {
@@ -88,12 +89,25 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
               "Analytics for ${_startDate!.day}/${_startDate!.month}/${_startDate!.year} - ${_endDate!.day}/${_endDate!.month}/${_endDate!.year}",
               style: const TextStyle(fontSize: 24),
             ),
-            Divider(),
+            const Divider(),
             // Collapsible list of time blocks
             Expanded(
-              child: Column(
+              child: ListView(
+                padding: EdgeInsets.all(20.0),
                 children: [
-                  SizedBox(height: 20),
+                  Text(
+                    "Distribution",
+                    style: TextStyle(
+                      fontSize: 26,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  Text(
+                    "Pecentage distribution of each type over the entire period",
+                    textAlign: TextAlign.center,
+                  ),
+                  Divider(),
+                  const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -102,18 +116,38 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                         blockTypes: blockTypes,
                         height: 250,
                       ),
-                      SizedBox(width: 20),
+                      const SizedBox(width: 20),
                       PieChartLegend(
                         blockTypes: blockTypes,
                         height: 200,
                       ),
                     ],
                   ),
-                  AreaCurveWidget(
-                    trends: analysis!.trends,
-                    selectedBlockTypeIds: [2, 3, 10],
-                    blockTypes: blockTypes,
+                  Divider(),
+                  Text(
+                    "Trends",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 26),
                   ),
+                  Text(
+                    "Trends over the period",
+                    textAlign: TextAlign.center,
+                  ),
+                  Divider(),
+                  BlockTypeSelectionWidget(
+                    blockTypes: blockTypes,
+                    onSelectionChanged: (selected) {
+                      setState(() {
+                        selectedBlockTypeIDs = selected;
+                      });
+                    },
+                  ),
+                  if (selectedBlockTypeIDs.isNotEmpty)
+                    AreaCurveWidget(
+                      trends: analysis!.trends,
+                      selectedBlockTypeIds: selectedBlockTypeIDs,
+                      blockTypes: blockTypes,
+                    ),
                 ],
               ),
             ),
@@ -216,11 +250,12 @@ class FloatChartWidget extends StatelessWidget {
   final List<BlockType> blockTypes;
   final double height;
 
-  FloatChartWidget({
+  const FloatChartWidget({
+    Key? key,
     required this.floats,
     required this.blockTypes,
     required this.height,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -305,11 +340,12 @@ class AreaCurveWidget extends StatelessWidget {
   final List<int> selectedBlockTypeIds;
   final List<BlockType> blockTypes;
 
-  AreaCurveWidget({
+  const AreaCurveWidget({
+    Key? key,
     required this.trends,
     required this.selectedBlockTypeIds,
     required this.blockTypes,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -351,7 +387,7 @@ class AreaCurvePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final double padding = 26.0;
+    const double padding = 26.0;
     final double curveWidth = size.width - padding * 2;
     final double curveHeight = size.height - padding * 2;
     final double maxTimeSpent = trends
@@ -403,7 +439,7 @@ class AreaCurvePainter extends CustomPainter {
           }
 
           // Draw circles at data points
-          final circleRadius = 4.0;
+          const circleRadius = 4.0;
           final circleCenter = Offset(x, y);
           final circlePaint = Paint();
 
@@ -417,7 +453,7 @@ class AreaCurvePainter extends CustomPainter {
 
       canvas.drawPath(curvePath, curvePaint);
 
-      final textStyle = TextStyle(
+      const textStyle = TextStyle(
         color: Colors.white, // Adjust the label color as desired
         fontSize: 12, // Adjust the label font size as desired
       );
@@ -440,7 +476,7 @@ class AreaCurvePainter extends CustomPainter {
       ];
       for (double hour in hourLabels) {
         final hourLabel = hour.toString();
-        final labelOffset = padding - 24;
+        const labelOffset = padding - 24;
         final y = padding + (1 - hour / maxTimeSpent) * curveHeight;
         textPainter.text = TextSpan(text: hourLabel, style: textStyle);
         textPainter.layout();
@@ -454,5 +490,59 @@ class AreaCurvePainter extends CustomPainter {
     return oldDelegate.trends != trends ||
         oldDelegate.sortedDays != sortedDays ||
         oldDelegate.selectedIDs != selectedIDs;
+  }
+}
+
+class BlockTypeSelectionWidget extends StatefulWidget {
+  final List<BlockType> blockTypes;
+  final Function(List<int>) onSelectionChanged;
+
+  const BlockTypeSelectionWidget({
+    Key? key,
+    required this.blockTypes,
+    required this.onSelectionChanged,
+  }) : super(key: key);
+
+  @override
+  State<BlockTypeSelectionWidget> createState() =>
+      _BlockTypeSelectionWidgetState();
+}
+
+class _BlockTypeSelectionWidgetState extends State<BlockTypeSelectionWidget> {
+  List<int> selectedBlockTypeIds = [];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const Text(
+          'Select Block Types:',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: widget.blockTypes.map((blockType) {
+            final isSelected = selectedBlockTypeIds.contains(blockType.id);
+            return FilterChip(
+              label: Text(blockType.name),
+              selected: isSelected,
+              selectedColor: blockType.color,
+              onSelected: (bool selected) {
+                setState(() {
+                  if (selected) {
+                    selectedBlockTypeIds.add(blockType.id);
+                  } else {
+                    selectedBlockTypeIds.remove(blockType.id);
+                  }
+                  widget.onSelectionChanged(selectedBlockTypeIds);
+                });
+              },
+            );
+          }).toList(),
+        ),
+      ],
+    );
   }
 }
