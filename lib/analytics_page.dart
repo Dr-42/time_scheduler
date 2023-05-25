@@ -93,20 +93,20 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
             // Collapsible list of time blocks
             Expanded(
               child: ListView(
-                padding: EdgeInsets.all(20.0),
+                padding: const EdgeInsets.all(20.0),
                 children: [
-                  Text(
+                  const Text(
                     "Distribution",
                     style: TextStyle(
                       fontSize: 26,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  Text(
+                  const Text(
                     "Pecentage distribution of each type over the entire period",
                     textAlign: TextAlign.center,
                   ),
-                  Divider(),
+                  const Divider(),
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -123,17 +123,17 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                       ),
                     ],
                   ),
-                  Divider(),
-                  Text(
+                  const Divider(),
+                  const Text(
                     "Trends",
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 26),
                   ),
-                  Text(
+                  const Text(
                     "Trends over the period",
                     textAlign: TextAlign.center,
                   ),
-                  Divider(),
+                  const Divider(),
                   BlockTypeSelectionWidget(
                     blockTypes: blockTypes,
                     onSelectionChanged: (selected) {
