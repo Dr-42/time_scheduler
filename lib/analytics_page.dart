@@ -355,13 +355,14 @@ class AreaCurvePainter extends CustomPainter {
     final double curveWidth = size.width - padding * 2;
     final double curveHeight = size.height - padding * 2;
     final double maxTimeSpent = trends
-        .fold(
-          0,
-          (maxValue, trend) => maxValue > trend.timeSpent.inHours
-              ? maxValue
-              : trend.timeSpent.inHours,
-        )
-        .toDouble();
+            .fold(
+              0,
+              (maxValue, trend) => maxValue > trend.timeSpent.inHours
+                  ? maxValue
+                  : trend.timeSpent.inHours,
+            )
+            .toDouble() +
+        1;
 
     final curvePath = Path();
     final curvePaint = Paint()
@@ -407,7 +408,7 @@ class AreaCurvePainter extends CustomPainter {
     canvas.drawPath(curvePath, curvePaint);
 
     final textStyle = TextStyle(
-      color: Colors.black, // Adjust the label color as desired
+      color: Colors.white, // Adjust the label color as desired
       fontSize: 12, // Adjust the label font size as desired
     );
 
