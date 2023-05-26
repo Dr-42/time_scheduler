@@ -341,6 +341,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                           TextButton(
                             onPressed: () {
                               //Post new block type to server
+                              if (nameController.text == "") {
+                                return;
+                              }
                               var blockType = BlockType(
                                 name: nameController.text,
                                 color: col,
@@ -417,6 +420,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                           ),
                           TextButton(
                             onPressed: () {
+                              if (nameController.text == "") {
+                                return;
+                              }
                               if (timeBlocks.isNotEmpty) {
                                 startTime = timeBlocks.last.endTime;
                               }
