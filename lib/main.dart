@@ -370,9 +370,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     builder: (BuildContext context) {
                       var nameController = TextEditingController();
                       int nextBlockType = 0;
-                      var startTime = DateTime.now().subtract(
-                        const Duration(seconds: 2),
-                      );
+                      var startTime = DateTime(1945, 1, 1, 1, 1, 1);
                       return AlertDialog(
                         title: const Text('Next Task'),
                         content: Column(

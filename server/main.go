@@ -56,8 +56,9 @@ type Time struct {
 	Second int `json:"second"`
 }
 
-func (t Time) toString() string {
-	return fmt.Sprintf("%d-%02d-%02d %02d:%02d:%02d", t.Year, t.Month, t.Day, t.Hour, t.Minute, t.Second)
+func (t Time) getPreviousDay() Time {
+	t2 := fromISO(t.toISO() - 86400)
+	return t2
 }
 
 func (t Time) FileName() string {
@@ -280,33 +281,8 @@ func CheckNewOverlap(ts []TimeBlock, t TimeBlock) bool {
 }
 
 func (t TimeBlock) Save() error {
-	prevDayBlock := TimeBlock{
-		StartTime: t.StartTime,
-		EndTime: Time{
-			Year:   t.StartTime.Year,
-			Month:  t.StartTime.Month,
-			Day:    t.StartTime.Day,
-			Hour:   23,
-			Minute: 59,
-			Second: 59,
-		},
-		BlockTypeID: t.BlockTypeID,
-		Title:       t.Title,
-	}
-	if t.StartTime.Day != t.EndTime.Day {
-		t.StartTime = Time{
-			Year:   t.StartTime.Year,
-			Month:  t.StartTime.Month,
-			Day:    t.EndTime.Day,
-			Hour:   0,
-			Minute: 0,
-			Second: 0,
-		}
-		prevDayBlock.Save()
-	}
-
 	// Get all time blocks for the day
-	timeBlocks, err := getDayTimeBlocks(t.StartTime.Year, t.StartTime.Month, t.StartTime.Day)
+	timeBlocks, err := getDayTimeBlocks(t.EndTime.Year, t.EndTime.Month, t.EndTime.Day)
 	if err != nil {
 		return err
 	}
@@ -318,7 +294,7 @@ func (t TimeBlock) Save() error {
 	// Check if the file exists
 	if _, err := os.Stat(t.EndTime.FileName()); os.IsNotExist(err) {
 		// Create the file
-		file, err := os.Create(t.StartTime.FileName())
+		file, err := os.Create(t.EndTime.FileName())
 		if err != nil {
 			return err
 		}
@@ -329,7 +305,7 @@ func (t TimeBlock) Save() error {
 	timeBlocks = append(timeBlocks, t)
 
 	// Open the file for writing
-	file, err := os.OpenFile(t.StartTime.FileName(), os.O_WRONLY, 0644)
+	file, err := os.OpenFile(t.EndTime.FileName(), os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
@@ -482,6 +458,68 @@ func handleTimeBlocks(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(r.Body)
 			fmt.Println(newTimeBlock)
 			return
+		}
+
+		// Check if the start tiime is 1945/1/1 1:1:1
+		// If so, set the start time to the endtime of the previous day's last time block
+		reftime := Time{1945, 1, 1, 1, 1, 1}
+		if newTimeBlock.StartTime == reftime {
+			// Get the previous day's last time block
+			previousDay := newTimeBlock.EndTime.getPreviousDay()
+			previousDayTimeBlocks, _ := getDayTimeBlocks(previousDay.Year, previousDay.Month, previousDay.Day)
+			if len(previousDayTimeBlocks) > 0 {
+				newTimeBlock.StartTime = previousDayTimeBlocks[len(previousDayTimeBlocks)-1].EndTime
+
+				// Save a time block for the previous day
+				prevBlock := TimeBlock{
+					StartTime: previousDayTimeBlocks[len(previousDayTimeBlocks)-1].EndTime,
+					EndTime: Time{
+						Year:   previousDay.Year,
+						Month:  previousDay.Month,
+						Day:    previousDay.Day,
+						Hour:   23,
+						Minute: 59,
+						Second: 59,
+					},
+					BlockTypeID: newTimeBlock.BlockTypeID,
+					Title:       newTimeBlock.Title,
+				}
+				prevBlock.Save()
+
+				//Create a systemBlock for today
+				systemBlock := TimeBlock{
+					StartTime: Time{
+						Year:   newTimeBlock.EndTime.Year,
+						Month:  newTimeBlock.EndTime.Month,
+						Day:    newTimeBlock.EndTime.Day,
+						Hour:   0,
+						Minute: 0,
+						Second: 0,
+					},
+					EndTime: Time{
+						Year:   newTimeBlock.EndTime.Year,
+						Month:  newTimeBlock.EndTime.Month,
+						Day:    newTimeBlock.EndTime.Day,
+						Hour:   0,
+						Minute: 0,
+						Second: 0,
+					},
+					BlockTypeID: 0,
+					Title:       "New Day",
+				}
+
+				systemBlock.Save()
+				newTimeBlock.StartTime = Time{
+					Year:   newTimeBlock.EndTime.Year,
+					Month:  newTimeBlock.EndTime.Month,
+					Day:    newTimeBlock.EndTime.Day,
+					Hour:   0,
+					Minute: 0,
+					Second: 0,
+				}
+			} else {
+				newTimeBlock.StartTime = newTimeBlock.EndTime
+			}
 		}
 
 		// Save the new time block
