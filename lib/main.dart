@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:window_size/window_size.dart';
 
 import 'home_page.dart';
 import 'analytics_page.dart';
@@ -9,6 +12,13 @@ import 'server_io.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    setWindowTitle('Time Scheduler');
+    setWindowMaxSize(const Size(800, 1024));
+    setWindowMinSize(const Size(600, 800));
+  }
+
   runApp(const MyApp());
 }
 
