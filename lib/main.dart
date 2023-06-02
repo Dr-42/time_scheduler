@@ -272,7 +272,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           ],
         ),
       ),
-      body: selectedIndex == 0 && timeBlocks.isNotEmpty
+      body: selectedIndex == 0 && currentBlockName != ""
           ? HomePage(
               userName: userName,
               timeBlocks: timeBlocks,
@@ -282,7 +282,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             )
           : selectedIndex == 0 && timeBlocks.isEmpty
               ? const Center(
-                  child: Text("Please add a time block"),
+                  child: Text("No time blocks added or no server connection"),
                 )
               : selectedIndex == 1
                   ? HistoryPage(

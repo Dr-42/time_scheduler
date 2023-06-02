@@ -174,7 +174,19 @@ class _CenterTimerState extends State<CenterTimer> {
 
   @override
   Widget build(BuildContext context) {
-    var elapsedTime = currentTime.difference(widget.timeBlocks.last.endTime);
+    Duration elapsedTime;
+    if (widget.timeBlocks.isEmpty) {
+      elapsedTime = currentTime.difference(DateTime(
+        currentTime.year,
+        currentTime.month,
+        currentTime.day,
+        0,
+        0,
+        0,
+      ));
+    } else {
+      elapsedTime = currentTime.difference(widget.timeBlocks.last.endTime);
+    }
     String formattedTime =
         "${elapsedTime.inHours.toString().padLeft(2, '0')}:${elapsedTime.inMinutes.remainder(60).toString().padLeft(2, '0')}:${elapsedTime.inSeconds.remainder(60).toString().padLeft(2, '0').padRight(2, '0')}";
 
@@ -301,10 +313,27 @@ class _PieChartState extends State<PieChart> {
         ),
     ];
 
-    var curData = Tuple(
-      widget.blockTypes[widget.curBlockType],
-      DateTime.now().difference(widget.timeBlocks.last.endTime).inSeconds,
-    );
+    Tuple<BlockType, int> curData;
+    if (widget.timeBlocks.isEmpty) {
+      curData = Tuple(
+        widget.blockTypes[widget.curBlockType],
+        DateTime.now()
+            .difference(DateTime(
+              DateTime.now().year,
+              DateTime.now().month,
+              DateTime.now().day,
+              0,
+              0,
+              0,
+            ))
+            .inSeconds,
+      );
+    } else {
+      curData = Tuple(
+        widget.blockTypes[widget.curBlockType],
+        DateTime.now().difference(widget.timeBlocks.last.endTime).inSeconds,
+      );
+    }
 
     data.add(curData);
     total += curData.item2;

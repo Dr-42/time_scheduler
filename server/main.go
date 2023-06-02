@@ -604,8 +604,8 @@ func getCurrentBlockName() (string, error) {
 			if err != nil {
 				return "", err
 			}
-			_, err = file.WriteString("Setting up server")
-			return "Setting up server", err
+			_, err = file.WriteString("Setting up for first use")
+			return "Setting up for first use", err
 		} else {
 			return "", err
 		}
