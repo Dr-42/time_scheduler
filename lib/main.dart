@@ -317,7 +317,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     builder: (BuildContext context) {
                       var nameController = TextEditingController();
                       int nextBlockType = 0;
-                      var startTime = DateTime(1945, 1, 1, 1, 1, 1);
                       return AlertDialog(
                         title: const Text('Change current block'),
                         content: Column(
@@ -364,9 +363,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                           ),
                           TextButton(
                             onPressed: () {
-                              if (timeBlocks.isNotEmpty) {
-                                startTime = timeBlocks.last.endTime;
-                              }
                               var success = false;
                               if (postCurrentBlockType(
                                   nextBlockType, serverIP)) {
