@@ -309,6 +309,92 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               FloatingActionButton(
+                onPressed: () {
+                  syncServer();
+                  //New popup window to add a new block
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      var nameController = TextEditingController();
+                      int nextBlockType = 0;
+                      var startTime = DateTime(1945, 1, 1, 1, 1, 1);
+                      return AlertDialog(
+                        title: const Text('Change current block'),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TextField(
+                              controller: nameController,
+                              decoration: const InputDecoration(
+                                labelText: 'Task Name',
+                              ),
+                            ),
+                            DropdownButtonFormField(
+                              decoration: const InputDecoration(
+                                labelText: 'Task Type',
+                              ),
+                              items: [
+                                for (var blockType in blockTypes)
+                                  DropdownMenuItem(
+                                    value: blockType,
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 20,
+                                          height: 20,
+                                          color: blockType.color,
+                                        ),
+                                        Text(" ${blockType.name}"),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                              onChanged: (value) {
+                                if (value != null) nextBlockType = value.id;
+                              },
+                            ),
+                          ],
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              if (timeBlocks.isNotEmpty) {
+                                startTime = timeBlocks.last.endTime;
+                              }
+                              var success = false;
+                              if (postCurrentBlockType(
+                                  nextBlockType, serverIP)) {
+                                success = true;
+                              }
+                              if (postCurrentBlockName(
+                                  nameController.text, serverIP)) {
+                                success = true;
+                              }
+
+                              if (success) {
+                                syncServer();
+                              }
+
+                              Navigator.pop(context);
+                            },
+                            child: const Text('Change'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                tooltip: 'Change current block',
+                child: const Icon(Icons.change_circle),
+              ),
+              const SizedBox(height: 10),
+              FloatingActionButton(
                 tooltip: "Add a block type",
                 child: const Icon(Icons.add_box),
                 onPressed: () {
