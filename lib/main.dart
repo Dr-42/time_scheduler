@@ -364,6 +364,14 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                           TextButton(
                             onPressed: () {
                               var success = false;
+                              if (nameController.text == "") {
+                                nameController.text = currentBlockName
+                                    .replaceAll("\"", "")
+                                    .trim();
+                              }
+                              if (nextBlockType == 0) {
+                                nextBlockType = currentBlockType;
+                              }
                               if (postCurrentBlockType(
                                   nextBlockType, serverIP)) {
                                 success = true;
