@@ -59,8 +59,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   late int currentBlockType = 0;
   late String serverIP = "";
   late String userName = "";
+  late String password = "";
   TextEditingController serverIPController = TextEditingController();
   TextEditingController userNameController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -130,13 +132,21 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                   labelText: 'User Name',
                 ),
               ),
+              TextField(
+                controller: passwordController,
+                decoration: const InputDecoration(
+                  labelText: 'Password',
+                ),
+              ),
               TextButton(
                 onPressed: () {
                   setState(() {
                     serverIP = serverIPController.text;
                     userName = userNameController.text;
+                    password = passwordController.text;
                     setServerIP(serverIP);
                     setUserName(userName);
+                    setUserPassword(password);
                     noServer = false;
                     syncServer();
                   });
@@ -167,6 +177,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                 builder: (BuildContext context) {
                   var ipController = TextEditingController();
                   var nameController = TextEditingController();
+                  var passwordController = TextEditingController();
 
                   return AlertDialog(
                     title: const Text('Settings'),
@@ -185,6 +196,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                             labelText: 'User Name',
                           ),
                         ),
+                        TextField(
+                          controller: passwordController,
+                          decoration: const InputDecoration(
+                            labelText: 'Password',
+                          ),
+                        ),
                       ],
                     ),
                     actions: [
@@ -201,12 +218,14 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                               serverIP = ipController.text;
                               setServerIP(serverIP);
                             }
-
                             if (nameController.text != "") {
                               userName = nameController.text;
                               setUserName(userName);
                             }
-
+                            if (passwordController.text != "") {
+                              password = passwordController.text;
+                              setUserPassword(password);
+                            }
                             syncServer();
                           });
                           Navigator.pop(context);
@@ -363,7 +382,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                           ),
                           TextButton(
                             onPressed: () {
-                              var success = false;
                               if (nameController.text == "") {
                                 nameController.text = currentBlockName
                                     .replaceAll("\"", "")
@@ -372,19 +390,19 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                               if (nextBlockType == 0) {
                                 nextBlockType = currentBlockType;
                               }
-                              if (postCurrentBlockType(
-                                  nextBlockType, serverIP)) {
-                                success = true;
-                              }
-                              if (postCurrentBlockName(
-                                  nameController.text, serverIP)) {
-                                success = true;
-                              }
-
-                              if (success) {
-                                syncServer();
-                              }
-
+                              postCurrentBlockType(nextBlockType, serverIP)
+                                  .then((value) {
+                                if (value) {
+                                  syncServer();
+                                }
+                              });
+                              postCurrentBlockName(
+                                      nameController.text, serverIP)
+                                  .then((value) {
+                                if (value) {
+                                  syncServer();
+                                }
+                              });
                               Navigator.pop(context);
                             },
                             child: const Text('Change'),
@@ -450,9 +468,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                 id: 0,
                               );
 
-                              if (postBlockType(blockType, serverIP)) {
-                                syncServer();
-                              }
+                              postBlockType(blockType, serverIP).then((value) {
+                                if (value) {
+                                  syncServer();
+                                }
+                              });
+                              syncServer();
                               Navigator.pop(context);
                             },
                             child: const Text('Add'),
@@ -537,23 +558,24 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                 endTime: endTime,
                               );
 
-                              var success = false;
-                              if (postTimeBlock(newBlock, serverIP)) {
-                                success = true;
-                              }
-                              if (postCurrentBlockType(
-                                  nextBlockType, serverIP)) {
-                                success = true;
-                              }
-                              if (postCurrentBlockName(
-                                  nameController.text, serverIP)) {
-                                success = true;
-                              }
-
-                              if (success) {
-                                syncServer();
-                              }
-
+                              postTimeBlock(newBlock, serverIP).then((value) {
+                                if (value) {
+                                  syncServer();
+                                }
+                              });
+                              postCurrentBlockType(nextBlockType, serverIP)
+                                  .then((value) {
+                                if (value) {
+                                  syncServer();
+                                }
+                              });
+                              postCurrentBlockName(
+                                      nameController.text, serverIP)
+                                  .then((value) {
+                                if (value) {
+                                  syncServer();
+                                }
+                              });
                               Navigator.pop(context);
                             },
                             child: const Text('Add'),

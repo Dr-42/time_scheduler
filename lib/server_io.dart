@@ -38,14 +38,14 @@ Future<void> setUserPassword(String password) async {
   prefs.setString('userPassword', passwordHash.toString());
 }
 
-bool postBlockType(BlockType blockType, String serverIP) {
+Future<bool> postBlockType(BlockType blockType, String serverIP) async {
   var url = Uri.parse('http://$serverIP/blocktypes');
-  var passwordHash = getUserPassword();
+  var passwordHash = await getUserPassword();
   var response = http.post(
     url,
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
-      'Authorization': '$passwordHash',
+      'Authorization': passwordHash,
     },
     body: jsonEncode(blockType.toJson()),
   );
@@ -59,14 +59,14 @@ bool postBlockType(BlockType blockType, String serverIP) {
   return false;
 }
 
-bool postTimeBlock(TimeBlock timeBlock, String serverIP) {
+Future<bool> postTimeBlock(TimeBlock timeBlock, String serverIP) async {
   var url = Uri.parse('http://$serverIP/timeblocks');
-  var passwordHash = getUserPassword();
+  var passwordHash = await getUserPassword();
   var response = http.post(
     url,
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
-      'Authorization': '$passwordHash',
+      'Authorization': passwordHash,
     },
     body: jsonEncode(timeBlock.toJson()),
   );
@@ -79,14 +79,14 @@ bool postTimeBlock(TimeBlock timeBlock, String serverIP) {
   return false;
 }
 
-bool postCurrentBlockName(String name, String serverIP) {
+Future<bool> postCurrentBlockName(String name, String serverIP) async {
   var url = Uri.parse('http://$serverIP/currentblockname');
-  var passwordHash = getUserPassword();
+  var passwordHash = await getUserPassword();
   var response = http.post(
     url,
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
-      'Authorization': '$passwordHash',
+      'Authorization': passwordHash,
     },
     body: jsonEncode(name),
   );
@@ -99,14 +99,14 @@ bool postCurrentBlockName(String name, String serverIP) {
   return false;
 }
 
-bool postCurrentBlockType(int t, String serverIP) {
+Future<bool> postCurrentBlockType(int t, String serverIP) async {
   var url = Uri.parse('http://$serverIP/currentblocktype');
-  var passwordHash = getUserPassword();
+  var passwordHash = await getUserPassword();
   var response = http.post(
     url,
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
-      'Authorization': '$passwordHash',
+      'Authorization': passwordHash,
     },
     body: jsonEncode(t),
   );
@@ -122,7 +122,7 @@ bool postCurrentBlockType(int t, String serverIP) {
 Future<List<BlockType>> fetchBlockTypes(String serverIP) async {
   //Check if the server is running
   var serverRunning = false;
-  var passwordHash = getUserPassword();
+  var passwordHash = await getUserPassword();
   var url = Uri.parse('http://$serverIP/blocktypes');
   while (!serverRunning) {
     if (serverIP == "") {
@@ -130,7 +130,7 @@ Future<List<BlockType>> fetchBlockTypes(String serverIP) async {
     }
     try {
       var response = await http.get(url, headers: <String, String>{
-        'Authorization': '$passwordHash',
+        'Authorization': passwordHash,
       });
       if (response.statusCode == 200) {
         serverRunning = true;
@@ -144,7 +144,7 @@ Future<List<BlockType>> fetchBlockTypes(String serverIP) async {
   http.Response response;
   try {
     response = await http.get(url, headers: <String, String>{
-      'Authorization': '$passwordHash',
+      'Authorization': passwordHash,
     });
   } catch (e) {
     return [];
@@ -166,7 +166,7 @@ Future<Analysis?> fetchAnalysis(
   var query = 'http://$serverIP/analysis?'
       'startyear=${startTime.year}&startmonth=${startTime.month}&startday=${startTime.day}'
       '&endyear=${endTime.year}&endmonth=${endTime.month}&endday=${endTime.day}';
-  var passwordHash = getUserPassword();
+  var passwordHash = await getUserPassword();
 
   var serverRunning = false;
   while (!serverRunning) {
@@ -175,7 +175,7 @@ Future<Analysis?> fetchAnalysis(
     }
     try {
       var response = await http.get(Uri.parse(query), headers: <String, String>{
-        'Authorization': '$passwordHash',
+        'Authorization': passwordHash,
       });
       if (response.statusCode == 200) {
         serverRunning = true;
@@ -185,7 +185,7 @@ Future<Analysis?> fetchAnalysis(
     }
   }
   var response = await http.get(Uri.parse(query), headers: {
-    'Authorization': '$passwordHash',
+    'Authorization': passwordHash,
   });
   if (response.statusCode == 200) {
     final Map<String, dynamic> jsonMap = json.decode(response.body);
@@ -199,14 +199,14 @@ Future<List<TimeBlock>> fetchTimeBlocks(String serverIP, DateTime when) async {
   var query =
       'http://$serverIP/timeblocks?year=${when.year}&month=${when.month}&day=${when.day}';
   var serverRunning = false;
-  var passwordHash = getUserPassword();
+  var passwordHash = await getUserPassword();
   while (!serverRunning) {
     if (serverIP == "") {
       return [];
     }
     try {
       var response = await http.get(Uri.parse(query), headers: {
-        'Authorization': '$passwordHash',
+        'Authorization': passwordHash,
       });
       if (response.statusCode == 200) {
         serverRunning = true;
@@ -216,7 +216,7 @@ Future<List<TimeBlock>> fetchTimeBlocks(String serverIP, DateTime when) async {
     }
   }
   var response = await http.get(Uri.parse(query), headers: {
-    'Authorization': '$passwordHash',
+    'Authorization': passwordHash,
   });
   if (response.statusCode == 200) {
     final List<Map<String, dynamic>> jsonList =
@@ -230,13 +230,14 @@ Future<List<TimeBlock>> fetchTimeBlocks(String serverIP, DateTime when) async {
 Future<String> fetchCurrentBlockName(String serverIP) async {
   var query = 'http://$serverIP/currentblockname';
   var serverRunning = false;
+  var passwordHash = await getUserPassword();
   while (!serverRunning) {
     if (serverIP == "") {
       return "";
     }
     try {
       var response = await http.get(Uri.parse(query), headers: {
-        'Authorization': '${getUserPassword()}',
+        'Authorization': passwordHash,
       });
       if (response.statusCode == 200) {
         serverRunning = true;
@@ -247,7 +248,7 @@ Future<String> fetchCurrentBlockName(String serverIP) async {
   }
 
   var response = await http.get(Uri.parse(query), headers: {
-    'Authorization': '${getUserPassword()}',
+    'Authorization': passwordHash,
   });
   if (response.statusCode == 200) {
     return response.body;
@@ -259,13 +260,14 @@ Future<String> fetchCurrentBlockName(String serverIP) async {
 Future<int> fetchCurrentBlockType(String serverIP) async {
   var query = 'http://$serverIP/currentblocktype';
   var serverRunning = false;
+  var passwordHash = await getUserPassword();
   while (!serverRunning) {
     if (serverIP == "") {
       return 0;
     }
     try {
       var response = await http.get(Uri.parse(query), headers: {
-        'Authorization': '${getUserPassword()}',
+        'Authorization': passwordHash,
       });
       if (response.statusCode == 200) {
         serverRunning = true;
@@ -276,7 +278,7 @@ Future<int> fetchCurrentBlockType(String serverIP) async {
   }
 
   var response = await http.get(Uri.parse(query), headers: {
-    'Authorization': '${getUserPassword()}',
+    'Authorization': passwordHash,
   });
   if (response.statusCode == 200) {
     return int.parse(response.body);

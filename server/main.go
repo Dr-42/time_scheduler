@@ -387,8 +387,12 @@ func main() {
 		}
 	}
 	var passwordHash string
-	file.Read([]byte(passwordHash))
-	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	scanner.Scan()
+	passwordHash = scanner.Text()
+
+	fmt.Println("Password hash: " + passwordHash)
+
 	// Initialize the HTTP routes
 	http.HandleFunc("/blocktypes", func(w http.ResponseWriter, r *http.Request) {
 		handleBlockTypes(w, r, passwordHash)
@@ -416,7 +420,7 @@ func handleBlockTypes(w http.ResponseWriter, r *http.Request, passwordHash strin
 	var password_req = r.Header.Get("Authorization")
 	if password_req != passwordHash {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		fmt.Println("GET /blocktypes - Unauthorized")
+		//fmt.Println("GET /blocktypes - Unauthorized")
 		return
 	}
 	switch r.Method {
@@ -475,7 +479,9 @@ func handleTimeBlocks(w http.ResponseWriter, r *http.Request, passwordHash strin
 	var password_req = r.Header.Get("Authorization")
 	if password_req != passwordHash {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		fmt.Println("GET /blocktypes - Unauthorized")
+		fmt.Println("GET /timeblocks - Unauthorized")
+		fmt.Println(password_req)
+		fmt.Println(passwordHash)
 		return
 	}
 	switch r.Method {
@@ -596,7 +602,7 @@ func handleCurrentBlockName(w http.ResponseWriter, r *http.Request, passwordHash
 	var password_req = r.Header.Get("Authorization")
 	if password_req != passwordHash {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		fmt.Println("GET /blocktypes - Unauthorized")
+		//fmt.Println("GET /currentblockname - Unauthorized")
 		return
 	}
 	switch r.Method {
@@ -682,7 +688,7 @@ func handleCurrentBlockType(w http.ResponseWriter, r *http.Request, passwordHash
 	var password_req = r.Header.Get("Authorization")
 	if password_req != passwordHash {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		fmt.Println("GET /blocktypes - Unauthorized")
+		//fmt.Println("GET /currentblocktype - Unauthorized")
 		return
 	}
 	switch r.Method {
@@ -780,7 +786,7 @@ func handleAnalysis(w http.ResponseWriter, r *http.Request, passwordHash string)
 	var password_req = r.Header.Get("Authorization")
 	if password_req != passwordHash {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		fmt.Println("GET /blocktypes - Unauthorized")
+		//fmt.Println("GET /analysis - Unauthorized")
 		return
 	}
 	switch r.Method {
