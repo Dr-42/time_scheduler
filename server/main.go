@@ -2,6 +2,8 @@ package main
 
 import (
 	"bufio"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -359,12 +361,50 @@ func main() {
 		port = os.Args[1]
 	}
 
+	var passwordfile string = "password.txt"
+	// Open the file for reading
+	file, err := os.OpenFile(passwordfile, os.O_RDONLY, 0644)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// Get the password
+			fmt.Print("Enter a password: ")
+			var password string
+			fmt.Scanln(&password)
+			// Hash the password using sha256
+			hashedPassword := sha256.Sum256([]byte(password))
+			// Save the hashed password to the file
+			file, err = os.Create(passwordfile)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer file.Close()
+			_, err = file.WriteString(hex.EncodeToString(hashedPassword[:]))
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			log.Fatal(err)
+		}
+	}
+	var passwordHash string
+	file.Read([]byte(passwordHash))
+	defer file.Close()
 	// Initialize the HTTP routes
-	http.HandleFunc("/blocktypes", handleBlockTypes)
-	http.HandleFunc("/timeblocks", handleTimeBlocks)
-	http.HandleFunc("/currentblockname", handleCurrentBlockName)
-	http.HandleFunc("/currentblocktype", handleCurrentBlockType)
-	http.HandleFunc("/analysis", handleAnalysis)
+	http.HandleFunc("/blocktypes", func(w http.ResponseWriter, r *http.Request) {
+		handleBlockTypes(w, r, passwordHash)
+	})
+	http.HandleFunc("/timeblocks", func(w http.ResponseWriter, r *http.Request) {
+		handleTimeBlocks(w, r, passwordHash)
+	})
+	http.HandleFunc("/currentblockname", func(w http.ResponseWriter, r *http.Request) {
+		handleCurrentBlockName(w, r, passwordHash)
+	})
+	http.HandleFunc("/currentblocktype", func(w http.ResponseWriter, r *http.Request) {
+		handleCurrentBlockType(w, r, passwordHash)
+	})
+	http.HandleFunc("/analysis", func(w http.ResponseWriter, r *http.Request) {
+		handleAnalysis(w, r, passwordHash)
+	})
 
 	// Start the HTTP server
 	fmt.Println("Server listening on port " + port + "...")
@@ -372,7 +412,13 @@ func main() {
 }
 
 // Handler for retrieving all block types and creating a new block type
-func handleBlockTypes(w http.ResponseWriter, r *http.Request) {
+func handleBlockTypes(w http.ResponseWriter, r *http.Request, passwordHash string) {
+	var password_req = r.Header.Get("Authorization")
+	if password_req != passwordHash {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		fmt.Println("GET /blocktypes - Unauthorized")
+		return
+	}
 	switch r.Method {
 	case http.MethodGet:
 		blockTypes, err := getBlockTypes()
@@ -425,7 +471,13 @@ func handleBlockTypes(w http.ResponseWriter, r *http.Request) {
 // Handler for retrieving time blocks for a specific day and creating a new time block
 // Get: /timeblocks?year=2020&month=1&day=1
 // Post: /timeblocks
-func handleTimeBlocks(w http.ResponseWriter, r *http.Request) {
+func handleTimeBlocks(w http.ResponseWriter, r *http.Request, passwordHash string) {
+	var password_req = r.Header.Get("Authorization")
+	if password_req != passwordHash {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		fmt.Println("GET /blocktypes - Unauthorized")
+		return
+	}
 	switch r.Method {
 	case http.MethodGet:
 		// Get the query parameters
@@ -540,7 +592,13 @@ func handleTimeBlocks(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleCurrentBlockName(w http.ResponseWriter, r *http.Request) {
+func handleCurrentBlockName(w http.ResponseWriter, r *http.Request, passwordHash string) {
+	var password_req = r.Header.Get("Authorization")
+	if password_req != passwordHash {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		fmt.Println("GET /blocktypes - Unauthorized")
+		return
+	}
 	switch r.Method {
 	case http.MethodGet:
 		// Get the current block name
@@ -572,6 +630,9 @@ func handleCurrentBlockName(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			if os.IsNotExist(err) {
 				file, err = os.Create("currentblockname.txt")
+				if err != nil {
+					return
+				}
 			} else {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				fmt.Println("POST /currentblockname - Internal server error")
@@ -617,7 +678,13 @@ func getCurrentBlockName() (string, error) {
 	return scanner.Text(), nil
 }
 
-func handleCurrentBlockType(w http.ResponseWriter, r *http.Request) {
+func handleCurrentBlockType(w http.ResponseWriter, r *http.Request, passwordHash string) {
+	var password_req = r.Header.Get("Authorization")
+	if password_req != passwordHash {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		fmt.Println("GET /blocktypes - Unauthorized")
+		return
+	}
 	switch r.Method {
 	case http.MethodGet:
 		// Get the current block type
@@ -649,6 +716,12 @@ func handleCurrentBlockType(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			if os.IsNotExist(err) {
 				file, err = os.Create("currentblocktype.txt")
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					fmt.Println("POST /currentblocktype - Internal server error")
+					fmt.Println(err)
+					return
+				}
 			} else {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				fmt.Println("POST /currentblocktype - Internal server error")
@@ -679,6 +752,9 @@ func getCurrentBlockType() (int, error) {
 	if err != nil {
 		if os.IsNotExist(err) {
 			file, err = os.Create("currentblocktype.txt")
+			if err != nil {
+				return 0, err
+			}
 			//Add zero to file
 			_, err = file.WriteString("0")
 			if err != nil {
@@ -700,7 +776,13 @@ func getCurrentBlockType() (int, error) {
 	return currentBlockType, nil
 }
 
-func handleAnalysis(w http.ResponseWriter, r *http.Request) {
+func handleAnalysis(w http.ResponseWriter, r *http.Request, passwordHash string) {
+	var password_req = r.Header.Get("Authorization")
+	if password_req != passwordHash {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		fmt.Println("GET /blocktypes - Unauthorized")
+		return
+	}
 	switch r.Method {
 	case http.MethodGet:
 		// Get the analysis
