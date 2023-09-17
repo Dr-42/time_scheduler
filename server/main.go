@@ -11,7 +11,10 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"syscall"
 	"time"
+
+	"golang.org/x/term"
 )
 
 type Duration struct {
@@ -362,14 +365,17 @@ func main() {
 	}
 
 	var passwordfile string = "password.txt"
+	var passwordHash string
 	// Open the file for reading
 	file, err := os.OpenFile(passwordfile, os.O_RDONLY, 0644)
 	if err != nil {
 		if os.IsNotExist(err) {
 			// Get the password
 			fmt.Print("Enter a password: ")
-			var password string
-			fmt.Scanln(&password)
+			password, err := term.ReadPassword(int(syscall.Stdin))
+			if err != nil {
+				log.Fatal(err)
+			}
 			// Hash the password using sha256
 			hashedPassword := sha256.Sum256([]byte(password))
 			// Save the hashed password to the file
@@ -377,21 +383,22 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			defer file.Close()
-			_, err = file.WriteString(hex.EncodeToString(hashedPassword[:]))
+			passwordHash = hex.EncodeToString(hashedPassword[:])
+			_, err = file.WriteString(passwordHash)
 			if err != nil {
 				log.Fatal(err)
 			}
 		} else {
 			log.Fatal(err)
 		}
+	} else {
+		scanner := bufio.NewScanner(file)
+		scanner.Scan()
+		passwordHash = scanner.Text()
+		defer file.Close()
 	}
-	var passwordHash string
-	scanner := bufio.NewScanner(file)
-	scanner.Scan()
-	passwordHash = scanner.Text()
 
-	fmt.Println("Password hash: " + passwordHash)
+	fmt.Println("\nPassword hash: " + passwordHash)
 
 	// Initialize the HTTP routes
 	http.HandleFunc("/blocktypes", func(w http.ResponseWriter, r *http.Request) {
@@ -420,7 +427,6 @@ func handleBlockTypes(w http.ResponseWriter, r *http.Request, passwordHash strin
 	var password_req = r.Header.Get("Authorization")
 	if password_req != passwordHash {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		//fmt.Println("GET /blocktypes - Unauthorized")
 		return
 	}
 	switch r.Method {
@@ -479,9 +485,6 @@ func handleTimeBlocks(w http.ResponseWriter, r *http.Request, passwordHash strin
 	var password_req = r.Header.Get("Authorization")
 	if password_req != passwordHash {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		fmt.Println("GET /timeblocks - Unauthorized")
-		fmt.Println(password_req)
-		fmt.Println(passwordHash)
 		return
 	}
 	switch r.Method {
@@ -602,7 +605,6 @@ func handleCurrentBlockName(w http.ResponseWriter, r *http.Request, passwordHash
 	var password_req = r.Header.Get("Authorization")
 	if password_req != passwordHash {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		//fmt.Println("GET /currentblockname - Unauthorized")
 		return
 	}
 	switch r.Method {
@@ -688,7 +690,6 @@ func handleCurrentBlockType(w http.ResponseWriter, r *http.Request, passwordHash
 	var password_req = r.Header.Get("Authorization")
 	if password_req != passwordHash {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		//fmt.Println("GET /currentblocktype - Unauthorized")
 		return
 	}
 	switch r.Method {
@@ -786,7 +787,6 @@ func handleAnalysis(w http.ResponseWriter, r *http.Request, passwordHash string)
 	var password_req = r.Header.Get("Authorization")
 	if password_req != passwordHash {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		//fmt.Println("GET /analysis - Unauthorized")
 		return
 	}
 	switch r.Method {

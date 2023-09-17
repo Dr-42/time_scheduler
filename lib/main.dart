@@ -134,6 +134,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               ),
               TextField(
                 controller: passwordController,
+                obscureText: true,
                 decoration: const InputDecoration(
                   labelText: 'Password',
                 ),
@@ -201,6 +202,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                           decoration: const InputDecoration(
                             labelText: 'Password',
                           ),
+                          obscureText: true,
                         ),
                       ],
                     ),
