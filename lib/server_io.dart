@@ -54,8 +54,6 @@ Future<bool> postBlockType(BlockType blockType, String serverIP) async {
     if (value.statusCode == 201) {
       return true;
     }
-    print(blockType.toJson());
-    print(value.body);
   });
 
   return false;
@@ -136,6 +134,9 @@ Future<List<BlockType>> fetchBlockTypes(String serverIP) async {
       });
       if (response.statusCode == 200) {
         serverRunning = true;
+        final List<Map<String, dynamic>> jsonList =
+            List<Map<String, dynamic>>.from(json.decode(response.body));
+        return jsonList.map((json) => BlockType.fromJson(json)).toList();
       } else if (response.statusCode == 401) {
         return [];
       }
@@ -143,21 +144,7 @@ Future<List<BlockType>> fetchBlockTypes(String serverIP) async {
       serverRunning = false;
     }
   }
-  http.Response response;
-  try {
-    response = await http.get(url, headers: <String, String>{
-      'Authorization': 'Bearer $passwordHash',
-    });
-  } catch (e) {
-    return [];
-  }
-  if (response.statusCode == 200) {
-    final List<Map<String, dynamic>> jsonList =
-        List<Map<String, dynamic>>.from(json.decode(response.body));
-    return jsonList.map((json) => BlockType.fromJson(json)).toList();
-  } else {
-    return [];
-  }
+  return [];
 }
 
 Future<Analysis?> fetchAnalysis(
@@ -181,17 +168,12 @@ Future<Analysis?> fetchAnalysis(
       });
       if (response.statusCode == 200) {
         serverRunning = true;
+        final Map<String, dynamic> jsonMap = json.decode(response.body);
+        return Analysis.fromJson(jsonMap);
       }
     } catch (e) {
       serverRunning = false;
     }
-  }
-  var response = await http.get(Uri.parse(query), headers: {
-    'Authorization': 'Bearer $passwordHash',
-  });
-  if (response.statusCode == 200) {
-    final Map<String, dynamic> jsonMap = json.decode(response.body);
-    return Analysis.fromJson(jsonMap);
   }
   return null;
 }
@@ -212,21 +194,15 @@ Future<List<TimeBlock>> fetchTimeBlocks(String serverIP, DateTime when) async {
       });
       if (response.statusCode == 200) {
         serverRunning = true;
+        final List<Map<String, dynamic>> jsonList =
+            List<Map<String, dynamic>>.from(json.decode(response.body));
+        return jsonList.map((json) => TimeBlock.fromJson(json)).toList();
       }
     } catch (e) {
       serverRunning = false;
     }
   }
-  var response = await http.get(Uri.parse(query), headers: {
-    'Authorization': 'Bearer $passwordHash',
-  });
-  if (response.statusCode == 200) {
-    final List<Map<String, dynamic>> jsonList =
-        List<Map<String, dynamic>>.from(json.decode(response.body));
-    return jsonList.map((json) => TimeBlock.fromJson(json)).toList();
-  } else {
-    return [];
-  }
+  return [];
 }
 
 Future<String> fetchCurrentBlockName(String serverIP) async {
@@ -243,20 +219,13 @@ Future<String> fetchCurrentBlockName(String serverIP) async {
       });
       if (response.statusCode == 200) {
         serverRunning = true;
+        return response.body;
       }
     } catch (e) {
       serverRunning = false;
     }
   }
-
-  var response = await http.get(Uri.parse(query), headers: {
-    'Authorization': 'Bearer $passwordHash',
-  });
-  if (response.statusCode == 200) {
-    return response.body;
-  } else {
-    return "";
-  }
+  return "";
 }
 
 Future<int> fetchCurrentBlockType(String serverIP) async {
@@ -273,18 +242,11 @@ Future<int> fetchCurrentBlockType(String serverIP) async {
       });
       if (response.statusCode == 200) {
         serverRunning = true;
+        return int.parse(response.body);
       }
     } catch (e) {
       serverRunning = false;
     }
   }
-
-  var response = await http.get(Uri.parse(query), headers: {
-    'Authorization': 'Bearer $passwordHash',
-  });
-  if (response.statusCode == 200) {
-    return int.parse(response.body);
-  } else {
-    return 0;
-  }
+  return 0;
 }

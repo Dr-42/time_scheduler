@@ -235,6 +235,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                             syncServer();
                           });
                           Navigator.pop(context);
+                          Future.delayed(const Duration(milliseconds: 300), () {
+                            syncServer();
+                          });
                         },
                         child: const Text('Apply'),
                       ),
@@ -410,6 +413,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                 }
                               });
                               Navigator.pop(context);
+                              Future.delayed(const Duration(milliseconds: 300),
+                                  () {
+                                syncServer();
+                              });
                             },
                             child: const Text('Change'),
                           ),
@@ -479,8 +486,11 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                   syncServer();
                                 }
                               });
-                              syncServer();
                               Navigator.pop(context);
+                              Future.delayed(const Duration(milliseconds: 300),
+                                  () {
+                                syncServer();
+                              });
                             },
                             child: const Text('Add'),
                           ),
@@ -581,6 +591,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                 if (value) {
                                   syncServer();
                                 }
+                              });
+                              Future.delayed(const Duration(milliseconds: 300),
+                                  () {
+                                syncServer();
                               });
                               Navigator.pop(context);
                             },
