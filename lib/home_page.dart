@@ -156,9 +156,16 @@ class CenterTimer extends StatefulWidget {
   State<CenterTimer> createState() => _CenterTimerState();
 }
 
-class _CenterTimerState extends State<CenterTimer> {
+class _CenterTimerState extends State<CenterTimer> with WidgetsBindingObserver {
   late Timer timer;
   late DateTime currentTime;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      currentTime = DateTime.now();
+    }
+  }
 
   @override
   void initState() {
