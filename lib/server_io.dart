@@ -45,7 +45,7 @@ Future<bool> postBlockType(BlockType blockType, String serverIP) async {
     url,
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
-      'Authorization': passwordHash,
+      'Authorization': 'Bearer $passwordHash',
     },
     body: jsonEncode(blockType.toJson()),
   );
@@ -54,6 +54,8 @@ Future<bool> postBlockType(BlockType blockType, String serverIP) async {
     if (value.statusCode == 201) {
       return true;
     }
+    print(blockType.toJson());
+    print(value.body);
   });
 
   return false;
@@ -66,7 +68,7 @@ Future<bool> postTimeBlock(TimeBlock timeBlock, String serverIP) async {
     url,
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
-      'Authorization': passwordHash,
+      'Authorization': 'Bearer $passwordHash',
     },
     body: jsonEncode(timeBlock.toJson()),
   );
@@ -86,7 +88,7 @@ Future<bool> postCurrentBlockName(String name, String serverIP) async {
     url,
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
-      'Authorization': passwordHash,
+      'Authorization': 'Bearer $passwordHash',
     },
     body: jsonEncode(name),
   );
@@ -106,9 +108,9 @@ Future<bool> postCurrentBlockType(int t, String serverIP) async {
     url,
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
-      'Authorization': passwordHash,
+      'Authorization': 'Bearer $passwordHash',
     },
-    body: jsonEncode(t),
+    body: jsonEncode(t.toString()),
   );
 
   response.then((value) {
@@ -130,7 +132,7 @@ Future<List<BlockType>> fetchBlockTypes(String serverIP) async {
     }
     try {
       var response = await http.get(url, headers: <String, String>{
-        'Authorization': passwordHash,
+        'Authorization': 'Bearer $passwordHash',
       });
       if (response.statusCode == 200) {
         serverRunning = true;
@@ -144,7 +146,7 @@ Future<List<BlockType>> fetchBlockTypes(String serverIP) async {
   http.Response response;
   try {
     response = await http.get(url, headers: <String, String>{
-      'Authorization': passwordHash,
+      'Authorization': 'Bearer $passwordHash',
     });
   } catch (e) {
     return [];
@@ -175,7 +177,7 @@ Future<Analysis?> fetchAnalysis(
     }
     try {
       var response = await http.get(Uri.parse(query), headers: <String, String>{
-        'Authorization': passwordHash,
+        'Authorization': 'Bearer $passwordHash',
       });
       if (response.statusCode == 200) {
         serverRunning = true;
@@ -185,7 +187,7 @@ Future<Analysis?> fetchAnalysis(
     }
   }
   var response = await http.get(Uri.parse(query), headers: {
-    'Authorization': passwordHash,
+    'Authorization': 'Bearer $passwordHash',
   });
   if (response.statusCode == 200) {
     final Map<String, dynamic> jsonMap = json.decode(response.body);
@@ -206,7 +208,7 @@ Future<List<TimeBlock>> fetchTimeBlocks(String serverIP, DateTime when) async {
     }
     try {
       var response = await http.get(Uri.parse(query), headers: {
-        'Authorization': passwordHash,
+        'Authorization': 'Bearer $passwordHash',
       });
       if (response.statusCode == 200) {
         serverRunning = true;
@@ -216,7 +218,7 @@ Future<List<TimeBlock>> fetchTimeBlocks(String serverIP, DateTime when) async {
     }
   }
   var response = await http.get(Uri.parse(query), headers: {
-    'Authorization': passwordHash,
+    'Authorization': 'Bearer $passwordHash',
   });
   if (response.statusCode == 200) {
     final List<Map<String, dynamic>> jsonList =
@@ -237,7 +239,7 @@ Future<String> fetchCurrentBlockName(String serverIP) async {
     }
     try {
       var response = await http.get(Uri.parse(query), headers: {
-        'Authorization': passwordHash,
+        'Authorization': 'Bearer $passwordHash',
       });
       if (response.statusCode == 200) {
         serverRunning = true;
@@ -248,7 +250,7 @@ Future<String> fetchCurrentBlockName(String serverIP) async {
   }
 
   var response = await http.get(Uri.parse(query), headers: {
-    'Authorization': passwordHash,
+    'Authorization': 'Bearer $passwordHash',
   });
   if (response.statusCode == 200) {
     return response.body;
@@ -267,7 +269,7 @@ Future<int> fetchCurrentBlockType(String serverIP) async {
     }
     try {
       var response = await http.get(Uri.parse(query), headers: {
-        'Authorization': passwordHash,
+        'Authorization': 'Bearer $passwordHash',
       });
       if (response.statusCode == 200) {
         serverRunning = true;
@@ -278,7 +280,7 @@ Future<int> fetchCurrentBlockType(String serverIP) async {
   }
 
   var response = await http.get(Uri.parse(query), headers: {
-    'Authorization': passwordHash,
+    'Authorization': 'Bearer $passwordHash',
   });
   if (response.statusCode == 200) {
     return int.parse(response.body);

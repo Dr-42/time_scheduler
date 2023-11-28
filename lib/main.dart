@@ -31,7 +31,9 @@ class MyApp extends StatelessWidget {
       title: 'Time Scheduler',
       home: MyHomePage(title: 'Time Scheduler'),
       theme: ThemeData(
-        colorScheme: const ColorScheme.dark(),
+        colorScheme: const ColorScheme.dark().copyWith(
+          background: Colors.black,
+        ),
       ),
     );
   }
@@ -42,7 +44,9 @@ class MyHomePage extends StatefulWidget {
 
   final String title;
   final ThemeData theme = ThemeData(
-    colorScheme: const ColorScheme.dark(),
+    colorScheme: const ColorScheme.dark().copyWith(
+      background: Colors.black,
+    ),
   );
 
   @override
