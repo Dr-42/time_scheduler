@@ -15,7 +15,7 @@ void main() {
 
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     setWindowTitle('Time Scheduler');
-    setWindowMaxSize(const Size(800, 1024));
+    setWindowMaxSize(const Size(600, 1024));
     setWindowMinSize(const Size(600, 800));
   }
 
@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
       home: MyHomePage(title: 'Time Scheduler'),
       theme: ThemeData(
         colorScheme: const ColorScheme.dark().copyWith(
-          background: Colors.black,
+          background: const Color(0xFF282828),
         ),
       ),
     );
@@ -45,7 +45,7 @@ class MyHomePage extends StatefulWidget {
   final String title;
   final ThemeData theme = ThemeData(
     colorScheme: const ColorScheme.dark().copyWith(
-      background: Colors.black,
+        background: const Color(0xFF282828),
     ),
   );
 
