@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
       home: MyHomePage(title: 'Time Scheduler'),
       theme: ThemeData(
         colorScheme: const ColorScheme.dark().copyWith(
-          background: const Color(0xFF282828),
+          surface: const Color(0xFF282828),
         ),
       ),
     );
